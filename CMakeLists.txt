@@ -34,9 +34,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build")
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 ####### Dependencies
-set(DEPS ${CMAKE_SOURCE_DIR}/deps)
-set(GLEW_ROOT_DIR ${DEPS}/glew)
-set(GLM_ROOT_DIR ${DEPS}/glm)
+#set(DEPS ${CMAKE_SOURCE_DIR}/deps)
+#set(GLEW_ROOT_DIR ${DEPS}/glew)
+#set(GLM_ROOT_DIR ${DEPS}/glm)
 
 #find_package(GLM REQUIRED)
 
@@ -59,7 +59,7 @@ endif(NOT OPENGL_FOUND)
 set(COMPILER_ROOT C:/Program\ Files\ \(x86\)/Dev-Cpp/MinGW32)
 set(GL_DIR ${COMPILER_ROOT}/include/GL)
 set(LIB_DIR ${COMPILER_ROOT}/lib)
-set(HEADER_FILES ${GL_DIR}/glu.h ${GL_DIR}/glut.h ${GL_DIR}/glew.h ${GL_DIR}/wglew.h)
+set(HEADER_FILES ${GL_DIR}/glu.h ${GL_DIR}/glut.h)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 set(SOURCE_FILES main.cpp)
@@ -69,8 +69,7 @@ add_executable(Rubik ${SOURCE_FILES} ${HEADER_FILES})
 # Linking & stuff
 #########################################################
 link_directories($(LIB_DIR))
-set(EXTRA_LIBRARIES glew32.lib
-                    libglu32.a
+set(EXTRA_LIBRARIES libglu32.a
                     libglut32.a)
 # create the program "Rubik"
 target_link_libraries(Rubik ${OPENGL_LIBRARIES} ${EXTRA_LIBRARIES})
