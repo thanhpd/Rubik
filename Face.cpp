@@ -50,10 +50,9 @@ void Face::draw() {
 }
 
 void Face::rotate(Vector3D u, float angle) {
-    vertex[0].rotate(u.getX(), u.getY(), u.getZ(), angle);
-    vertex[1].rotate(u.getX(), u.getY(), u.getZ(), angle);
-    vertex[2].rotate(u.getX(), u.getY(), u.getZ(), angle);
-    vertex[3].rotate(u.getX(), u.getY(), u.getZ(), angle);
+	for (int i = 0; i < NUM_POINTS; i++ ) {
+		vertex[i].rotate(u.getX(), u.getY(), u.getZ(), angle);
+	}
     center.rotate(u.getX(), u.getY(), u.getZ(), angle);
 }
 

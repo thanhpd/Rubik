@@ -36,13 +36,15 @@ void Cube::set(const Cube &cube) {
 }
 
 void Cube::draw() {
-    for (int i = 0; i < NUM_FACES; i++)
-        face[i].draw();
+    for (int i = 0; i < NUM_FACES; i++) {
+    	face[i].draw();	
+    }
 }
 
 void Cube::rotate(Vector3D u, float angle) {
-    for (int i = 0; i < NUM_FACES; i++)
-        face[i].rotate(u, angle);
+    for (int i = 0; i < NUM_FACES; i++) {
+    	face[i].rotate(u, angle);	
+    }
 
     center.rotate(u.getX(), u.getY(), u.getZ(), angle);
 }

@@ -38,19 +38,19 @@ float Point3D::getZ() {
     return z;
 }
 
-void Point3D::rotate(float ux, float uy, float uz, float angle) {
-    /* convert the angle from degree to radian */
-    float radian_angle = angle * M_PI / 180;
+void Point3D::rotate(float ux, float uy, float uz, float degreeAngle) {
+    /* Convert the degreeAngle from degree to radian */
+    float radianAngle = degreeAngle * M_PI / 180;
 
-    /* calculate the cos(angle) and sin(angle) */
-    float c = cos(radian_angle);
-    float s = sin(radian_angle);
+    /* Calculate sine and cosine value of radianAngle */
+    float c = cos(radianAngle);
+    float s = sin(radianAngle);
 
-    /* calculate the ordinates of this point after rotating */
+    /* Calculate the coordinates of the point after rotating around vector u */
     float result_x = (c + (1 - c) * ux * ux) * x + ((1 - c) * uy * ux - s * uz) * y + ((1 - c) * uz * ux + s * uy) * z;
     float result_y = ((1 - c) * ux * uy + s * uz) * x + (c + (1 - c) * uy * uy) * y + ((1 - c) * uz * uy - s * ux) * z;
     float result_z = ((1 - c) * ux * uz - s * uy) * x + ((1 - c) * uy * uz + s * ux) * y + (c + (1 - c) * uz * uz) * z;
 
-    /* set this point to the new ordinates */
+    /* Apply new coordinates to the current point */
     set(result_x, result_y, result_z);
 }
