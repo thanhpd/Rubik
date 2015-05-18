@@ -1,9 +1,12 @@
 #include <stdlib.h>
 #include <cmath>
+#include <iostream>
 #include "Point3D.h"
 #include "Vector3D.h"
 #include "Camera.h"
 #include "Rubik.h"
+
+using namespace std;
 
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -16,11 +19,13 @@
 const int screenWidth = 600;
 const int screenHeight = 600;
 const char *screenTitle = "Rubik";
+const int rotationNum = 90;
+const double deltaAngle = 90.0 / rotationNum;
 
 Camera myCam;
 
 Rubik myRubik;
-int n = 3;
+int n = 5;
 Point3D minPoint, maxPoint;
 
 Point3D nearPoint, farPoint;
@@ -30,17 +35,23 @@ int sliceName, cubeX, cubeY, cubeZ;
 double planeValue;
 
 int rotateSliceName, rotateSliceValue;
-bool isCheckingRotation = false, isRotating = false;
-int num = 0;
+bool isCheckingRubik, isRotating;
+double rotateAngle;
+
+bool isCheckingCamera;
+int camX, camY;
 
 void myInit(){
+	myRubik.setSize(n);
     myRubik.init();
-    n = myRubik.getSize();
     minPoint.set(myRubik.getMinPoint());
     maxPoint.set(myRubik.getMaxPoint());
     
- 	myCam.set(7.0, 7.0, 7.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
- 	myCam.setShape(45.0f, 1.0, 0.1f, 50.0f);
+    double m = 2 * n;
+ 	myCam.set(m, m, m, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+ 	myCam.setShape(45.0f, 1.0, 0.1f, 100.0f);
+ 	
+ 	isCheckingRubik = isRotating = isCheckingCamera = false;
 }
 
 void myDisplay() {
@@ -60,18 +71,6 @@ void myKeyboard(unsigned char key, int x, int y) {
 		case '-': myCam.slide(0, 0, 0.2); break;
 		case 'c': myCam.rotate_clockwise(5.0); break;
 		case 'v': myCam.rotate_clockwise(-5.0); break;
-	}
-	
-	glutPostRedisplay();
-}
-
-void mySpecial(int key, int x, int y) {
-	switch(key)
-	{
-		case GLUT_KEY_RIGHT: myCam.right(-5.0); break;
-		case GLUT_KEY_LEFT: myCam.right(5.0); break;		
-		case GLUT_KEY_UP: myCam.up(5.0); break;
-		case GLUT_KEY_DOWN: myCam.up(-5.0); break;
 	}
 	
 	glutPostRedisplay();
@@ -217,17 +216,21 @@ void myMouse(int button, int state, int x, int y){
 		Point3D p;
 		int sName, cx, cy, cz;
 		double pValue;
-		if (findIntersectionWithRubikFace(p, sName, cx, cy, cz, pValue)) // click in rubik
+		if (findIntersectionWithRubikFace(p, sName, cx, cy, cz, pValue)){ // click in rubik
 			if (!isRotating){
-				isCheckingRotation = true;
+				isCheckingRubik = true;
 				clickPoint.set(p);
 				sliceName = sName;
 				cubeX = cx; cubeY = cy; cubeZ = cz;
 				planeValue = pValue;
 			}
-		cout << cx << " " << cy << " " << cz << endl;
-		cout << p.getX() << " " << p.getY() << " " << p.getZ() << endl;
+		}else { // click in backgroud
+			isCheckingCamera = true;
+			camX = x; camY = y;
+		}
 	}else{ // mouse release
+		isCheckingRubik = false;
+		isCheckingCamera = false;
 	}
 }
 
@@ -259,16 +262,14 @@ Point3D findIntersectionWithPlane(int name, double value){
 	return Point3D(px, py, pz);
 }
 
-void rotateRubik(int dir){
-	double angle = (dir == CLOCKWISE) ? -1 : 1;
-	myRubik.rotate(rotateSliceName, rotateSliceValue, angle);
-	glutPostRedisplay();
-	if (num < 89) {
-		glutTimerFunc(1, rotateRubik, dir);
-		num++;
+void rotateRubik(int num){
+	if (num < rotationNum) {
+		myRubik.rotate(rotateSliceName, rotateSliceValue, rotateAngle);
+		glutPostRedisplay();
+		glutTimerFunc(1, rotateRubik, num + 1);
 	} else {
 		isRotating = false;
-		num = 0;
+		int dir = (rotateAngle == -deltaAngle) ? CLOCKWISE : COUNTER_CLOCKWISE;
 		myRubik.invertSlice(rotateSliceName, rotateSliceValue, dir);
 	}
 }
@@ -278,62 +279,64 @@ void rotateRubik(Point3D a, Point3D b){
 	double absY = abs(b.getY() - a.getY());
 	double absZ = abs(b.getZ() - a.getZ());
 	
-	int dir;
+	// -deltaAngle ~ CLOCKWISE ; deltaAngle ~ COUNTER_CLOCKWISE
 	if (sliceName == SLICE_X){
 		if (absZ > absY){
 			rotateSliceName = SLICE_Y;
 			rotateSliceValue = cubeY;
-			if (cubeX == 0) dir = (b.getZ() > a.getZ()) ? COUNTER_CLOCKWISE : CLOCKWISE;
-			else dir = (b.getZ() > a.getZ()) ? CLOCKWISE : COUNTER_CLOCKWISE;
-			glutTimerFunc(1, rotateRubik, dir);
+			if (cubeX == 0) rotateAngle = (b.getZ() > a.getZ()) ? deltaAngle : -deltaAngle;
+			else rotateAngle = (b.getZ() > a.getZ()) ? -deltaAngle : deltaAngle;
 		}else{
 			rotateSliceName = SLICE_Z;
 			rotateSliceValue = cubeZ;
-			if (cubeX == 0) dir = (b.getY() > a.getY()) ? CLOCKWISE : COUNTER_CLOCKWISE;
-			else dir = (b.getY() > a.getY()) ? COUNTER_CLOCKWISE : CLOCKWISE;
-			glutTimerFunc(1, rotateRubik, dir);
+			if (cubeX == 0) rotateAngle = (b.getY() > a.getY()) ? -deltaAngle : deltaAngle;
+			else rotateAngle = (b.getY() > a.getY()) ? deltaAngle : -deltaAngle;
 		}
 	}else if (sliceName == SLICE_Y){
 		if (absZ > absX){
 			rotateSliceName = SLICE_X;
 			rotateSliceValue = cubeX;
-			if (cubeY == 0) dir = (b.getZ() > a.getZ()) ? CLOCKWISE : COUNTER_CLOCKWISE;
-			else dir = (b.getZ() > a.getZ()) ? COUNTER_CLOCKWISE : CLOCKWISE;
-			glutTimerFunc(1, rotateRubik, dir);
+			if (cubeY == 0) rotateAngle = (b.getZ() > a.getZ()) ? -deltaAngle : deltaAngle;
+			else rotateAngle = (b.getZ() > a.getZ()) ? deltaAngle : -deltaAngle;
 		}else{
 			rotateSliceName = SLICE_Z;
 			rotateSliceValue = cubeZ;
-			if (cubeY == 0) dir = (b.getX() > a.getX()) ? COUNTER_CLOCKWISE : CLOCKWISE;
-			else dir = (b.getX() > a.getX()) ? CLOCKWISE : COUNTER_CLOCKWISE;
-			glutTimerFunc(1, rotateRubik, dir);
+			if (cubeY == 0) rotateAngle = (b.getX() > a.getX()) ? deltaAngle : -deltaAngle;
+			else rotateAngle = (b.getX() > a.getX()) ? -deltaAngle : deltaAngle;
 		}
 	}else{
 		if (absX > absY){
 			rotateSliceName = SLICE_Y;
 			rotateSliceValue = cubeY;
-			if (cubeZ == 0) dir = (b.getX() > a.getX()) ? CLOCKWISE : COUNTER_CLOCKWISE;
-			else dir = (b.getX() > a.getX()) ? COUNTER_CLOCKWISE : CLOCKWISE;
-			glutTimerFunc(1, rotateRubik, dir);
+			if (cubeZ == 0) rotateAngle = (b.getX() > a.getX()) ? -deltaAngle : deltaAngle;
+			else rotateAngle = (b.getX() > a.getX()) ? deltaAngle : -deltaAngle;
 		}else{
 			rotateSliceName = SLICE_X;
 			rotateSliceValue = cubeX;
-			if (cubeZ == 0) dir = (b.getY() > a.getY()) ? COUNTER_CLOCKWISE : CLOCKWISE;
-			else dir = (b.getY() > a.getY()) ? CLOCKWISE : COUNTER_CLOCKWISE;
-			glutTimerFunc(1, rotateRubik, dir);
+			if (cubeZ == 0) rotateAngle = (b.getY() > a.getY()) ? deltaAngle : -deltaAngle;
+			else rotateAngle = (b.getY() > a.getY()) ? -deltaAngle : deltaAngle;
 		}
 	}
+
+	glutTimerFunc(1, rotateRubik, 0);
 }
 
 void myMotion(int x, int y){
 	findNearAndFarPoint(x, y);
 	
-	if (isCheckingRotation){
+	if (isCheckingRubik){
 		Point3D p = findIntersectionWithPlane(sliceName, planeValue);
 		if (manhattanDistance(p, clickPoint) > 0.7){ // start rotate
-			isCheckingRotation = false;
+			isCheckingRubik = false;
 			isRotating = true;
 			rotateRubik(clickPoint, p);
 		}
+	}else if (isCheckingCamera){
+		int dx = x - camX, dy = y - camY;
+		myCam.up(dy * 0.5);
+		myCam.right(dx * 0.5);
+		camX = x; camY = y;
+		glutPostRedisplay();
 	}
 }
 
@@ -345,7 +348,6 @@ int main(int argc, char** argv) {
 	glutCreateWindow(screenTitle);
 	glutDisplayFunc(myDisplay);
 	glutKeyboardFunc(myKeyboard);
-	glutSpecialFunc(mySpecial);
 	glutMouseFunc(myMouse);
 	glutMotionFunc(myMotion);
 	
