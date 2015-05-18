@@ -1,32 +1,36 @@
 #ifndef RUBIK_RUBIK_H
 #define RUBIK_RUBIK_H
 
-
 #include "Cube.h"
 #include "Image.h"
+#include "Constant.h"
+#include <iostream>
 
-const int RED = 22;
-const int GREEN = 16;
-const int WHITE = 14;
-const int ORANGE = 4;
-const int BLUE = 10;
-const int YELLOW = 12;
+using namespace std;
 
 class Rubik {
 private:
-    Cube cube[27];
+	int n;	
+    Cube ***cube;
+    Point3D min, max;
 
-    GLuint loadTexture(Image *image);
-
+	void initCubeMatrix();	
+    GLuint loadTexture(string);
+    GLuint loadTexture(Image*);
+    
 public:
-    Rubik();
-
+	Rubik();
+    Rubik(int);
+    ~Rubik();
     void init();
-
     void draw();
-
-    void rotate(int face, float angle);
+    void rotate(int, int, float);
+    Cube getCube(int, int, int);
+	void invertSlice(int, int, int);
+	Point3D getMinPoint();
+	Point3D getMaxPoint();
+	void setSize(int);
+	int getSize();
 };
-
 
 #endif //RUBIK_RUBIK_H

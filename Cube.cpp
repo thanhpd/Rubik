@@ -1,7 +1,3 @@
-//
-// Created by Giap Nguyen on 5/16/15.
-//
-
 #include "Cube.h"
 
 Cube::Cube() { }

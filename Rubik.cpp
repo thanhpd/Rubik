@@ -1,5 +1,35 @@
 #include "Rubik.h"
 
+Rubik::Rubik() {
+	n = 3;
+	init();
+}
+
+Rubik::Rubik(int n) {
+	this->n = n;
+	init();
+}
+
+Rubik::~Rubik(){
+	for (int i = 0; i < n; i++){
+		for (int j = 0; j < n; j++){
+			delete cube[i][j];
+		}
+		delete cube[i];
+	}
+	delete cube;
+}
+
+void Rubik::initCubeMatrix(){
+	cube = new Cube**[n];
+	for (int i = 0; i < n; i++){
+		cube[i] = new Cube*[n];
+		for (int j = 0; j < n; j++){
+			cube[i][j] = new Cube[n];
+		}
+	}
+}
+
 GLuint Rubik::loadTexture(Image *image) {
     GLuint textureId;
     glGenTextures(1, &textureId);
@@ -10,155 +40,153 @@ GLuint Rubik::loadTexture(Image *image) {
     return textureId;
 }
 
-Rubik::Rubik() {
-    init();
+GLuint Rubik::loadTexture(string imageName){
+	Image *image = loadBMP(imageName.c_str());
+	GLuint id = loadTexture(image);
+	delete image;
+	return id;
 }
 
 void Rubik::init() {
-    Point3D p[2][2][2];
-    Face faceX[2][1][1], faceY[1][2][1], faceZ[1][1][2];
-
-    GLuint white_textureId;
-    GLuint red_textureId;
-    GLuint blue_textureId;
-    GLuint green_textureId;
-    GLuint yellow_textureId;
-    GLuint orange_textureId;
-    GLuint gray_textureId;
-
+	initCubeMatrix();
+	
     /* bind each color image with an id */
-    Image *image1 = loadBMP("/Users/GiapNV/ClionProjects/Rubik/red.bmp");
-    red_textureId = loadTexture(image1);
-    delete image1;
+    GLuint whiteId = loadTexture("white.bmp");
+    GLuint redId = loadTexture("red.bmp");
+    GLuint blueId = loadTexture("blue.bmp");
+    GLuint orangeId = loadTexture("orange.bmp");
+    GLuint greenId = loadTexture("green.bmp");
+    GLuint yellowId = loadTexture("yellow.bmp");
+    GLuint grayId = loadTexture("gray.bmp");
 
+	Point3D p[n + 1][n + 1][n + 1];
+	Face faceX[n + 1][n][n], faceY[n][n + 1][n], faceZ[n][n][n + 1];
+	
+	/* initialize all points in the rubik */
+	double m = n / 2.0;
+	for (int x = 0; x <= n; x++)
+		for (int y = 0; y <= n; y++)
+			for (int z = 0; z <= n; z++)
+				p[x][y][z].set((float) x - m, (float) y - m, (float) z - m);
+	min.set(-m, -m, -m);
+	max.set(m, m, m);
 
-    Image *image = loadBMP("/Users/GiapNV/ClionProjects/Rubik/white.bmp");
-    white_textureId = loadTexture(image);
-    delete image;
+	GLuint textureId;
+    /* initilize all faces that perpendicular with x-axis */
+	for (int x = 0; x <= n; x++)
+		for (int y = 0; y < n; y++)
+			for (int z = 0; z < n; z++){
+				if (x == 0) textureId = orangeId;
+				else if (x == n) textureId = redId;
+				else textureId = grayId;
+				faceX[x][y][z].set(p[x][y][z], p[x][y + 1][z], p[x][y + 1][z + 1], p[x][y][z + 1], textureId);
+			}
 
-    Image *image2 = loadBMP("/Users/GiapNV/ClionProjects/Rubik/blue.bmp");
-    blue_textureId = loadTexture(image2);
-    delete image2;
+    /* initilize all faces that perpendicular with y-axis */
+	for (int x = 0; x < n; x++)
+		for (int y = 0; y <= n; y++)
+			for (int z = 0; z < n; z++){
+				if (y == 0) textureId = blueId;
+				else if (y == n) textureId = greenId;
+				else textureId = grayId;
+				faceY[x][y][z].set(p[x][y][z], p[x][y][z + 1], p[x + 1][y][z + 1], p[x + 1][y][z], textureId);
+			}
+			
+    /* initilize all faces that perpendicular with z-axis */
+	for (int x = 0; x < n; x++)
+		for (int y = 0; y < n; y++)
+			for (int z = 0; z <= n; z++){
+				if (z == 0) textureId = yellowId;
+				else if (z == n) textureId = whiteId;
+				else textureId = grayId;
+				faceZ[x][y][z].set(p[x][y][z], p[x][y + 1][z], p[x + 1][y + 1][z], p[x + 1][y][z], textureId);
+			}
 
-    Image *image3 = loadBMP("/Users/GiapNV/ClionProjects/Rubik/orange.bmp");
-    orange_textureId = loadTexture(image3);
-    delete image3;
-
-    Image *image4 = loadBMP("/Users/GiapNV/ClionProjects/Rubik/green.bmp");
-    green_textureId = loadTexture(image4);
-    delete image4;
-
-    Image *image5 = loadBMP("/Users/GiapNV/ClionProjects/Rubik/yellow.bmp");
-    yellow_textureId = loadTexture(image5);
-    delete image5;
-
-    Image *image6 = loadBMP("/Users/GiapNV/ClionProjects/Rubik/gray.bmp");
-    gray_textureId = loadTexture(image6);
-    delete image6;
-
-    /* initialize all point in the rubik */
-    for (int x = 0; x < 2; x++)
-        for (int y = 0; y < 2; y++)
-            for (int z = 0; z < 2; z++)
-                p[x][y][z].set((float) x - 1.5f, (float) y - 1.5f, (float) z - 1.5f);
-
-    /* initilize all Face that perpendicular with x-axis */
-    for (int x = 0; x < 2; x++)
-        for (int y = 0; y < 1; y++)
-            for (int z = 0; z < 1; z++)
-                if (x == 0)
-                    faceX[x][y][z].set(p[x][y][z], p[x][y + 1][z], p[x][y + 1][z + 1], p[x][y][z + 1],
-                                       orange_textureId);
-                else if (x == 1)
-                    faceX[x][y][z].set(p[x][y][z], p[x][y + 1][z], p[x][y + 1][z + 1], p[x][y][z + 1], red_textureId);
-                else
-                    faceX[x][y][z].set(p[x][y][z], p[x][y + 1][z], p[x][y + 1][z + 1], p[x][y][z + 1], gray_textureId);
-
-    /* initilize all Face that perpendicular with y-axis */
-    for (int x = 0; x < 1; x++)
-        for (int y = 0; y < 2; y++)
-            for (int z = 0; z < 1; z++)
-                if (y == 0)
-                    faceY[x][y][z].set(p[x][y][z], p[x][y][z + 1], p[x + 1][y][z + 1], p[x + 1][y][z], blue_textureId);
-                else if (y == 1)
-                    faceY[x][y][z].set(p[x][y][z], p[x][y][z + 1], p[x + 1][y][z + 1], p[x + 1][y][z], green_textureId);
-                else
-                    faceY[x][y][z].set(p[x][y][z], p[x][y][z + 1], p[x + 1][y][z + 1], p[x + 1][y][z], gray_textureId);
-
-    /* initilize all Face that perpendicular with z-axis */
-    for (int x = 0; x < 1; x++)
-        for (int y = 0; y < 1; y++)
-            for (int z = 0; z < 2; z++)
-                if (z == 0)
-                    faceZ[x][y][z].set(p[x][y][z], p[x][y + 1][z], p[x + 1][y + 1][z], p[x + 1][y][z],
-                                       yellow_textureId);
-                else if (z == 1)
-                    faceZ[x][y][z].set(p[x][y][z], p[x][y + 1][z], p[x + 1][y + 1][z], p[x + 1][y][z], white_textureId);
-                else
-                    faceZ[x][y][z].set(p[x][y][z], p[x][y + 1][z], p[x + 1][y + 1][z], p[x + 1][y][z], gray_textureId);
-
-
-
-    /* inititalize 27 SolidCubes of the Rubik */
-    int x = 0, y = 0, z = 0;
-//    for (int x = 0; x < 3; x++)
-//        for (int y = 0; y < 3; y++)
-//            for (int z = 0; z < 3; z++)
-    cube[9 * x + 3 * y + z].set(faceX[x][y][z], faceX[x + 1][y][z], faceY[x][y][z], faceY[x][y + 1][z],
-                                faceZ[x][y][z], faceZ[x][y][z + 1]);
-
+	/* inititalize n*n*n cubes of the Rubik */
+	for (int x = 0; x < n; x++)
+		for (int y = 0; y < n; y++)
+			for (int z = 0; z < n; z++)
+				cube[x][y][z].set(faceX[x][y][z], faceX[x + 1][y][z], faceY[x][y][z], faceY[x][y + 1][z],
+										faceZ[x][y][z], faceZ[x][y][z + 1]);
 }
 
 void Rubik::draw() {
-//    for (int i = 0; i < 27; i++)
-    cube[0].draw();
+	for (int i = 0; i < n; i++)
+		for (int j = 0; j < n; j++)
+			for (int k = 0; k < n; k++)
+				cube[i][j][k].draw();
 }
 
-void Rubik::rotate(int face, float angle) {
-    Vector3D u;
-
-    /* to rotate a face of Rubik, we only need to rotate 9 SolidCube of that face */
-    if (face == RED) {
-        u.set(1.0, 0.0, 0.0);
-        for (int i = 0; i < 27; i++)
-            if (cube[i].getCenter().getX() > 0.5)
-                cube[i].rotate(u, angle);
-    }
-
-    if (face == GREEN) {
-        u.set(0.0, 1.0, 0.0);
-        for (int i = 0; i < 27; i++)
-            if (cube[i].getCenter().getY() > 0.5)
-                cube[i].rotate(u, angle);
-    }
-
-    if (face == WHITE) {
-        u.set(0.0, 0.0, 1.0);
-        for (int i = 0; i < 27; i++)
-            if (cube[i].getCenter().getZ() > 0.5)
-                cube[i].rotate(u, angle);
-    }
-
-    if (face == ORANGE) {
-        u.set(-1.0f, 0.0, 0.0);
-        for (int i = 0; i < 27; i++)
-            if (cube[i].getCenter().getX() < -0.5)
-                cube[i].rotate(u, angle);
-    }
-
-    if (face == BLUE) {
-        u.set(0.0, -1.0f, 0.0);
-        for (int i = 0; i < 27; i++)
-            if (cube[i].getCenter().getY() < -0.5)
-                cube[i].rotate(u, angle);
-    }
-
-    if (face == YELLOW) {
-        u.set(0.0, 0.0, -1.0f);
-        for (int i = 0; i < 27; i++)
-            if (cube[i].getCenter().getZ() < -0.5)
-                cube[i].rotate(u, angle);
-    }
+Cube Rubik::getCube(int i, int j, int k){
+	return cube[i][j][k];
 }
 
+void Rubik::rotate(int name, int value, float angle){
+	Vector3D u;
+	int i1, i2, j1, j2, k1, k2;
+	
+	switch(name){
+		case SLICE_X:
+			i1 = i2 = value;
+			j1 = 0; j2 = n - 1;
+			k1 = 0; k2 = n - 1;
+			u.set(1, 0, 0);
+			break;
+		case SLICE_Y:
+			i1 = 0; i2 = n - 1;
+			j1 = j2 = value;
+			k1 = 0; k2 = n - 1;
+			u.set(0, 1, 0);
+			break;
+		case SLICE_Z:
+			i1 = 0; i2 = n - 1;
+			j1 = 0; j2 = n - 1;
+			k1 = k2 = value;
+			u.set(0, 0, 1);
+			break;
+	}
+	
+	for (int i = i1; i <= i2; i++)
+		for (int j = j1; j <= j2; j++)
+			for (int k = k1; k <= k2; k++)
+				cube[i][j][k].rotate(u, angle);
+}
 
+void Rubik::invertSlice(int name, int value, int dir){
+	Cube tem[n][n];
+	for (int i = 0; i < n; i++)
+		for (int j = 0; j < n; j++)
+			if (name == SLICE_X) tem[i][j].set(cube[value][i][j]);
+			else if (name == SLICE_Y) tem[i][j].set(cube[i][value][j]);
+			else if (name == SLICE_Z) tem[i][j].set(cube[i][j][value]);
+	
+	if (dir == COUNTER_CLOCKWISE){
+		for (int i = 0; i < n; i++)
+			for (int j = 0; j < n; j++)
+				if (name == SLICE_X) cube[value][i][j].set(tem[j][n-i-1]);
+				else if (name == SLICE_Y) cube[i][value][j].set(tem[n-j-1][i]);
+				else if (name == SLICE_Z) cube[i][j][value].set(tem[j][n-i-1]);
+	}else{
+		for (int i = 0; i < n; i++)
+			for (int j = 0; j < n; j++)
+				if (name == SLICE_X) cube[value][i][j].set(tem[n-j-1][i]);
+				else if (name == SLICE_Y) cube[i][value][j].set(tem[j][n-i-1]);
+				else if (name == SLICE_Z) cube[i][j][value].set(tem[n-j-1][i]);
+	}
+}
+
+Point3D Rubik::getMinPoint(){
+	return min;
+}
+
+Point3D Rubik::getMaxPoint(){
+	return max;
+}
+
+void Rubik::setSize(int n){
+	this->n = n;
+}
+
+int Rubik::getSize(){
+	return n;
+}
