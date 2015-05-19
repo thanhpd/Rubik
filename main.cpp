@@ -490,7 +490,7 @@ switch (control) {
 	case RESET_GAME_ID:
 		myInit();
 		GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
-//		myReshape(tx, ty);
+		myReshape(tx, ty);
 		shuffleRubik();
 		break;
 	case START_NEW_GAME_ID:
@@ -503,7 +503,7 @@ switch (control) {
 		n = cubeSize;
 		myInit();
 		GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
-//		myReshape(tx, ty);
+		myReshape(tx, ty);
 		shuffleRubik();
 		break;
 }
