@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <cmath>
 #include <iostream>
+#include <ctime>
 #include "Point3D.h"
 #include "Vector3D.h"
 #include "Camera.h"
@@ -43,6 +44,9 @@ double rotateAngle;
 bool isCheckingCamera;
 int camX, camY;
 
+bool isShuffling;
+int shuffleNum, shuffleCounter;
+
 /** Live variables passed into GLUI **/
 int size = 2;
 int mainWindow;
@@ -73,6 +77,11 @@ GLUI_Panel *newGamePanel, *setPanel;
 #define SHOW_ID 403
 #define SPEED_ID 500
 
+void setRubikRotationNumber(int num){
+	myRubik.setRotationNumber(num);
+	rotationNum = num;
+	deltaAngle = 90.0 / num;
+}
 
 void myInit(){
 	myRubik.setSize(n);
@@ -84,11 +93,9 @@ void myInit(){
  	myCam.set(m, m, m, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
  	myCam.setShape(45.0f, 1.0, 0.1f, 100.0f);
  	
- 	isCheckingRubik = isRotating = isCheckingCamera = false;
+ 	isCheckingRubik = isRotating = isCheckingCamera = isShuffling = false;
  	
- 	myRubik.setRotationNumber(900);
- 	rotationNum = myRubik.getRotationNumber();
- 	deltaAngle = 90.0 / rotationNum;
+ 	setRubikRotationNumber(90);
 }
 
 void myDisplay() {
@@ -103,17 +110,6 @@ void myDisplay() {
 //	glMultMatrixf(view_rotate);
     glFlush();
     glutSwapBuffers();
-}
-
-void mySpecial(int key, int x, int y){
-	switch(key){
-		case GLUT_KEY_UP: myCam.slide(0, 0, -0.2); break;
-		case GLUT_KEY_DOWN: myCam.slide(0, 0, 0.2); break;
-		case GLUT_KEY_LEFT: myCam.rotate(5.0); break;
-		case GLUT_KEY_RIGHT: myCam.rotate(-5.0); break;
-	}
-	
-	glutPostRedisplay();
 }
 
 void findNearAndFarPoint(int x, int y){
@@ -380,6 +376,53 @@ void myMotion(int x, int y){
 	}
 }
 
+void shuffleRubik(int num){
+	if (num < rotationNum){
+		myRubik.rotate(rotateSliceName, rotateSliceValue, rotateAngle);
+		glutPostRedisplay();
+		glutTimerFunc(1, shuffleRubik, num + 1);
+	}else{
+		int dir = (rotateAngle == -deltaAngle) ? CLOCKWISE : COUNTER_CLOCKWISE;
+		myRubik.invertSlice(rotateSliceName, rotateSliceValue, dir);
+
+		shuffleCounter++;
+		if (shuffleCounter == shuffleNum){
+			isShuffling = isRotating = false;
+			setRubikRotationNumber(90);
+		}else{	
+			rotateSliceName = rand() % 3;
+			rotateSliceValue = rand() % n;
+			rotateAngle = (rand() % 2 == 0) ? deltaAngle : -deltaAngle;
+			glutTimerFunc(0, shuffleRubik, 0);
+		}
+	}
+}
+
+void shuffleRubik(){
+	isShuffling = isRotating = true;
+	setRubikRotationNumber(30);
+	shuffleNum = 12 * n; shuffleCounter = 0;
+	
+	srand(time(NULL));
+	rotateSliceName = rand() % 3;
+	rotateSliceValue = rand() % n;
+	rotateAngle = (rand() % 2 == 0) ? deltaAngle : -deltaAngle;
+	
+	glutTimerFunc(0, shuffleRubik, 0);
+}
+
+void mySpecial(int key, int x, int y){
+	switch(key){
+		case GLUT_KEY_UP: myCam.slide(0, 0, -0.2); break;
+		case GLUT_KEY_DOWN: myCam.slide(0, 0, 0.2); break;
+		case GLUT_KEY_LEFT: myCam.rotate(5.0); break;
+		case GLUT_KEY_RIGHT: myCam.rotate(-5.0); break;
+		case GLUT_KEY_HOME: shuffleRubik(); break;
+	}
+	
+	glutPostRedisplay();
+}
+
 void myReshape(int x, int y) {
 	int tx, ty, tw, th;
 	GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
@@ -417,8 +460,7 @@ void controlCallback(int control) {
 }
 
 
-void myGlutIdle( void )
-{
+void myGlutIdle( void ){
   /* According to the GLUT specification, the current window is 
      undefined during an idle callback.  So we need to explicitly change
      it if necessary */
