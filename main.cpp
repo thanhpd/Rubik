@@ -434,7 +434,7 @@ void shuffleRubik(int num){
 		shuffleCounter++;
 		if (shuffleCounter == shuffleNum){
 			isShuffling = isRotating = false;
-			setRubikRotationNumber(speed/1.5);
+			setRubikRotationNumber(speed);
 		}else{	
 			rotateSliceName = rand() % 3;
 			rotateSliceValue = rand() % n;
@@ -446,7 +446,7 @@ void shuffleRubik(int num){
 
 void shuffleRubik() {
 	isShuffling = isRotating = true;
-	setRubikRotationNumber(speed);
+	setRubikRotationNumber(speed / 2);
 	shuffleNum = 12 * n; shuffleCounter = 0;
 	
 	srand(time(NULL));
@@ -463,7 +463,6 @@ void mySpecial(int key, int x, int y){
 		case GLUT_KEY_DOWN: myCam.slide(0, 0, 0.2); break;
 		case GLUT_KEY_LEFT: myCam.rotate(5.0); break;
 		case GLUT_KEY_RIGHT: myCam.rotate(-5.0); break;
-		case GLUT_KEY_HOME: shuffleRubik(); break;
 	}
 	
 	glutPostRedisplay();
@@ -600,7 +599,7 @@ void mainScene() {
 	GLUI_StaticText *spinText = new GLUI_StaticText(setPanel, "Spin Speed");
 	spinText->set_alignment(GLUI_ALIGN_CENTER);
 	GLUI_Scrollbar *speedBar = new GLUI_Scrollbar(setPanel, "Spin speed:", GLUI_SCROLL_HORIZONTAL, &speed, SPEED_ID, controlCallback);
-	speedBar->set_float_limits(15.0, 180.0);
+	speedBar->set_int_limits(180, 15);
 	new GLUI_StaticText(setPanel, "");
 	
 	new GLUI_Checkbox(setPanel, "Enable Sound", &enableSound);
@@ -632,6 +631,7 @@ int main(int argc, char** argv) {
 	GLUI_Master.set_glutReshapeFunc(myReshape);
 	GLUI_Master.set_glutDisplayFunc(myDisplay);
 	GLUI_Master.set_glutKeyboardFunc(myKeyboard);
+	GLUI_Master.set_glutSpecialFunc(mySpecial);
 	GLUI_Master.set_glutMouseFunc(myMouse);
 	glutMotionFunc(myMotion);
 	
