@@ -426,9 +426,7 @@ void myGlutIdle( void )
   	glutSetWindow(mainWindow); 	
   }
 
-  /*  GLUI_Master.sync_live_all();  -- not needed - nothing to sync in this
-                                       application  */
-
+  GLUI_Master.sync_live_all();
   glutPostRedisplay();
 }
 
@@ -438,10 +436,14 @@ int main(int argc, char** argv) {
 	glutInitWindowSize(screenWidth, screenHeight);
 	
 	mainWindow = glutCreateWindow(screenTitle);
-	GLUI_Master.set_glutReshapeFunc(myReshape);
-	GLUI_Master.set_glutDisplayFunc(myDisplay);
-	GLUI_Master.set_glutSpecialFunc(mySpecial);
-	GLUI_Master.set_glutMouseFunc(myMouse);
+	//GLUI_Master.set_glutReshapeFunc(myReshape);
+//	GLUI_Master.set_glutDisplayFunc(myDisplay);
+//	GLUI_Master.set_glutSpecialFunc(mySpecial);
+//	GLUI_Master.set_glutMouseFunc(myMouse);
+	glutReshapeFunc(myReshape);
+	glutDisplayFunc(myDisplay);
+	glutSpecialFunc(mySpecial);
+	glutMouseFunc(myMouse);
 	glutMotionFunc(myMotion);
 	
 	myInit();
@@ -523,10 +525,9 @@ int main(int argc, char** argv) {
 //	GLUI_Translation *transZ = new GLUI_Translation(glui2, "Move Z", GLUI_TRANSLATION_Z, &objectPos[2]);
 //	transZ->set_speed(.005);
 	
-#if 0
+
 	/**** We register the idle callback with GLUI, *not* with GLUT ****/
 	GLUI_Master.set_glutIdleFunc( myGlutIdle );
-#endif
 	
 	glutMainLoop();
 	return 0;
