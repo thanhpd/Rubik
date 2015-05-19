@@ -166,7 +166,7 @@ void Camera::right(float _angle)
 	slide(0, 0, dist);	
 }
 
-void Camera::rotate_clockwise(float _angle)
+void Camera::rotate(float _angle)
 {
 	Vector3D temp(eye.getX(), eye.getY(), eye.getZ());
 	float dist = temp.length();

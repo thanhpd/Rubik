@@ -10,12 +10,13 @@ using namespace std;
 
 class Rubik {
 private:
-	int n;	
+	int n, rotationNumber;
     Cube ***cube;
     Point3D min, max;
 
-	void initCubeMatrix();	
+	void initCubeMatrix();
     GLuint loadTexture(string);
+//    GLuint loadTexture(char*);
     GLuint loadTexture(Image*);
     
 public:
@@ -31,6 +32,8 @@ public:
 	Point3D getMaxPoint();
 	void setSize(int);
 	int getSize();
+    void setRotationNumber(int);
+    int getRotationNumber();
 };
 
 #endif //RUBIK_RUBIK_H

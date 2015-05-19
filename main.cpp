@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <cmath>
 #include <iostream>
+#include <ctime>
 #include "Point3D.h"
 #include "Vector3D.h"
 #include "Camera.h"
@@ -22,8 +23,9 @@ const int screenHeight = 600;
 const int screenPosX = 100;
 const int screenPosY = 100;
 const char *screenTitle = "Rubik";
-const int rotationNum = 90;
-const double deltaAngle = 90.0 / rotationNum;
+
+int rotationNum;
+double deltaAngle;
 
 Camera myCam;
 
@@ -44,11 +46,14 @@ double rotateAngle;
 bool isCheckingCamera;
 int camX, camY;
 
+bool isShuffling;
+int shuffleNum, shuffleCounter;
+
 /** Live variables passed into GLUI **/
 int size = 2;
 int mainWindow;
 int showRadio = 1;
-int cubeSize = 2;
+int cubeSize = 5;
 float speed = 1.0;
 int enableSound = 1;
 float cubeRotate = 1.0;
@@ -77,6 +82,12 @@ bool fullscreen = false;
 #define SHOW_ID 403
 #define SPEED_ID 500
 
+void setRubikRotationNumber(int num) {
+	myRubik.setRotationNumber(num);
+	rotationNum = num;
+	deltaAngle = 90.0 / num;
+}
+
 void myInit(){
 	myRubik.setSize(n);
     myRubik.init();
@@ -87,7 +98,9 @@ void myInit(){
  	myCam.set(m, m, m, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
  	myCam.setShape(45.0f, 1.0, 0.1f, 100.0f);
  	
- 	isCheckingRubik = isRotating = isCheckingCamera = false;
+ 	isCheckingRubik = isRotating = isCheckingCamera = isShuffling = false;
+ 	
+ 	setRubikRotationNumber(90);
 }
 
 void myDisplay() {
@@ -117,11 +130,7 @@ void myDisplayStart() {
 }
 
 void myKeyboard(unsigned char key, int x, int y) {
-	switch(key){
-		case '+': myCam.slide(0, 0, -0.2); break;
-		case '-': myCam.slide(0, 0, 0.2); break;
-		case 'c': myCam.rotate_clockwise(5.0); break;
-		case 'v': myCam.rotate_clockwise(-5.0); break;
+	switch(key) {
 		case 'f': 
 			if(!fullscreen) {
 	        	glutFullScreen();
@@ -402,45 +411,106 @@ void myMotion(int x, int y){
 	}
 }
 
-void myReshape(int w, int h) {
-	// Prevent a divide by zero, when window is too short
-	// (you cant make a window of zero width).
-	if (h == 0)
-		h = 1;
 
-	float ratio =  w * 1.0 / h;
+void shuffleRubik(int num){
+	if (num < rotationNum){
+		myRubik.rotate(rotateSliceName, rotateSliceValue, rotateAngle);
+		glutPostRedisplay();
+		glutTimerFunc(1, shuffleRubik, num + 1);
+	}else{
+		int dir = (rotateAngle == -deltaAngle) ? CLOCKWISE : COUNTER_CLOCKWISE;
+		myRubik.invertSlice(rotateSliceName, rotateSliceValue, dir);
 
-	// Use the Projection Matrix
-	glMatrixMode(GL_PROJECTION);
+		shuffleCounter++;
+		if (shuffleCounter == shuffleNum){
+			isShuffling = isRotating = false;
+			setRubikRotationNumber(90);
+		}else{	
+			rotateSliceName = rand() % 3;
+			rotateSliceValue = rand() % n;
+			rotateAngle = (rand() % 2 == 0) ? deltaAngle : -deltaAngle;
+			glutTimerFunc(0, shuffleRubik, 0);
+		}
+	}
+}
 
-	// Reset Matrix
-	glLoadIdentity();
+void shuffleRubik(){
+	isShuffling = isRotating = true;
+	setRubikRotationNumber(30);
+	shuffleNum = 12 * n; shuffleCounter = 0;
+	
+	srand(time(NULL));
+	rotateSliceName = rand() % 3;
+	rotateSliceValue = rand() % n;
+	rotateAngle = (rand() % 2 == 0) ? deltaAngle : -deltaAngle;
+	
+	glutTimerFunc(0, shuffleRubik, 0);
+}
 
-	// Set the viewport to be the entire window
-	glViewport(0, 0, w, h);
+void mySpecial(int key, int x, int y){
+	switch(key){
+		case GLUT_KEY_UP: myCam.slide(0, 0, -0.2); break;
+		case GLUT_KEY_DOWN: myCam.slide(0, 0, 0.2); break;
+		case GLUT_KEY_LEFT: myCam.rotate(5.0); break;
+		case GLUT_KEY_RIGHT: myCam.rotate(-5.0); break;
+		case GLUT_KEY_HOME: shuffleRubik(); break;
+	}
+	
+	glutPostRedisplay();
+}
 
-	// Set the correct perspective.
-	gluPerspective(45,ratio,1,100);
 
-	// Get Back to the Modelview
-	glMatrixMode(GL_MODELVIEW);
+void myReshape(int x, int y) {
+	int tx, ty, tw, th;
+    GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
+    if(th == 0)
+            th = 1;
+    float ratio = 1.0* tw / th;
+
+    // Use the Projection Matrix
+    glMatrixMode(GL_PROJECTION);
+
+    // Reset Matrix
+    glLoadIdentity();
+
+    // Set the viewport to be the entire window
+    glViewport(0, 0, tw, th);
+
+    // Set the correct perspective.
+    gluPerspective(45,ratio,1,1000);
+
+    // Get Back to the Modelview
+    glMatrixMode(GL_MODELVIEW);
+    glutPostRedisplay();
 }
 
 void controlCallback(int control) {
 switch (control) {
+	int tx, ty, tw, th;
+	case RESET_GAME_ID:
+		myInit();
+		GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
+//		myReshape(tx, ty);
+		shuffleRubik();
+		break;
 	case START_NEW_GAME_ID:
 		gluiMain->show();
 		gluiMainShow = true;
 		
 		gluiSub->hide();
 		gluiSubShow = false;
-
+		
+		n = cubeSize;
+		myInit();
+		GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
+//		myReshape(tx, ty);
+		shuffleRubik();
 		break;
 }
+	glutPostRedisplay();
 }
 
-void myGlutIdle( void )
-{
+void myGlutIdle( void ){
   /* According to the GLUT specification, the current window is 
      undefined during an idle callback.  So we need to explicitly change
      it if necessary */
@@ -448,9 +518,7 @@ void myGlutIdle( void )
   	glutSetWindow(mainWindow); 	
   }
 
-  /*  GLUI_Master.sync_live_all();  -- not needed - nothing to sync in this
-                                       application  */
-
+//  GLUI_Master.sync_live_all();
   glutPostRedisplay();
 }
 
@@ -458,8 +526,7 @@ void startScene() {
 	int w = glutGet(GLUT_SCREEN_WIDTH);
 	int h = glutGet(GLUT_SCREEN_HEIGHT);
 	int sW = 200;
-	int sH = 300;
-	
+	int sH = 300;	
 	/** Create the side subwindow **/
    	GLUI *glui = GLUI_Master.create_glui_subwindow( mainWindow );
    	
@@ -546,6 +613,7 @@ int main(int argc, char** argv) {
 	glutMotionFunc(myMotion);
 	
 	myInit(); 
+//	shuffleRubik();
 	
 	mainScene();
 	gluiMain->hide();
@@ -555,10 +623,8 @@ int main(int argc, char** argv) {
 	gluiSub->show();
 	gluiSubShow = true;
 
-#if 0
 	/**** We register the idle callback with GLUI, *not* with GLUT ****/
 	GLUI_Master.set_glutIdleFunc( myGlutIdle );
-#endif
 	
 	glutMainLoop();
 	return 0;
