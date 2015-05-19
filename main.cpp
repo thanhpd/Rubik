@@ -78,6 +78,7 @@ bool fullscreen = false;
 #define CUBE_SIZE_ID 300
 #define START_NEW_GAME_ID 199
 #define RESET_GAME_ID 198
+#define RESTART_GAME_ID 197
 #define HELP_ID 100
 #define DISABLE_ID 400
 #define ENABLE_ID 401
@@ -515,10 +516,16 @@ switch (control) {
 		myReshape(tx, ty);
 		shuffleRubik();
 		break;
-	case INVOKE_ID:
-		_startScene = GLUI_Master.create_glui("Start Game");
-		new GLUI_StaticText( _startScene, "Add your widgets" );
-		glutHideWindow();
+	case RESTART_GAME_ID:
+		gluiMain->hide();
+		gluiMainShow = false;
+		
+		gluiSub->show();
+		gluiSubShow = true;
+		
+		myInit();
+		GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
+		myReshape(tx, ty);
 		break;
 	}
 	glutPostRedisplay();
@@ -585,7 +592,7 @@ void mainScene() {
 	/** Reset game button **/
 	new GLUI_Button(glui, "Shuffle Rubik", RESET_GAME_ID, controlCallback);
 	glui->add_statictext("");
-	new GLUI_Button(glui, "RESTART GAME", RESET_GAME_ID, controlCallback);
+	new GLUI_Button(glui, "RESTART GAME", RESTART_GAME_ID, controlCallback);
 	
 	/** Setting section **/
 	setPanel = new GLUI_Panel(glui, "Setting", false);
@@ -601,15 +608,8 @@ void mainScene() {
 	/** A 'help' button **/
 	new GLUI_Button(glui, "Help", HELP_ID, controlCallback);
 	new GLUI_StaticText( glui, "" );
-	
-	/** A 'quit' button **/
-	new GLUI_Button(glui, "Quit", 0,(GLUI_Update_CB)exit);
-	new GLUI_StaticText( glui, "" );
-	
-	/** TEST INVOKE DIALOG HERE **/
-	new GLUI_Button(glui, "Invoke", INVOKE_ID, controlCallback);
-	new GLUI_StaticText( glui, "" );
 
+	/** A 'quit' button **/
 	new GLUI_Button(glui, "Quit", 0, (GLUI_Update_CB)exit);
 	
 	/** Link windows to GLUI, and register idle callback **/
