@@ -93,8 +93,9 @@ void myDisplay() {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     myRubik.draw();
 	
+//	glTranslatef( 0.0, 0.0, -2.6f );
 	glTranslatef(objectPos[0], objectPos[1], -objectPos[2]); 
-	glMultMatrixf(view_rotate);
+//	glMultMatrixf(view_rotate);
     glFlush();
     glutSwapBuffers();
 }
@@ -493,28 +494,29 @@ int main(int argc, char** argv) {
 	/** Link windows to GLUI, and register idle callback **/
 	glui->set_main_gfx_window( mainWindow );
 	
-	/** Create the bottom subwindow **/
-	glui2 = GLUI_Master.create_glui_subwindow(mainWindow, GLUI_SUBWINDOW_BOTTOM);
-	glui2->set_main_gfx_window(mainWindow);
-	
-	GLUI_Rotation *viewRotation = new GLUI_Rotation(glui2, "Cube rotation", view_rotate);
-	viewRotation->set_spin(0.1);
-	new GLUI_Column(glui2, false);
-	
-	GLUI_Translation *transXY = new GLUI_Translation(glui2, "Move XY", GLUI_TRANSLATION_XY, objectPos);
-	transXY->set_speed(.005);
-	new GLUI_Column(glui2, false);
-	
-	GLUI_Translation *transX = new GLUI_Translation(glui2, "Move X", GLUI_TRANSLATION_X, objectPos);
-	transX->set_speed(.005);
-	new GLUI_Column(glui2, false);
-	
-	GLUI_Translation *transY = new GLUI_Translation(glui2, "Move Y", GLUI_TRANSLATION_Y, &objectPos[1]);
-	transY->set_speed(.005);
-	new GLUI_Column(glui2, false);
-	
-	GLUI_Translation *transZ = new GLUI_Translation(glui2, "Move Z", GLUI_TRANSLATION_Z, &objectPos[2]);
-	transZ->set_speed(.005);
+	///** Create the bottom subwindow **/
+//	glui2 = GLUI_Master.create_glui_subwindow(mainWindow, GLUI_SUBWINDOW_BOTTOM);
+//	glui2->set_main_gfx_window(mainWindow);
+//	
+//	GLUI_Rotation *viewRotation = new GLUI_Rotation(glui2, "Cube rotation", view_rotate);
+//	viewRotation->set_spin(0.1);
+//	new GLUI_Column(glui2, false);
+//	
+//	GLUI_Translation *transXY = new GLUI_Translation(glui2, "Move XY", GLUI_TRANSLATION_XY, objectPos);
+//	transXY->set_speed(.005);
+//	new GLUI_Column(glui2, false);
+//	
+//	GLUI_Translation *transX = new GLUI_Translation(glui2, "Move X", GLUI_TRANSLATION_X, objectPos);
+//	transX->set_speed(.005);
+//	new GLUI_Column(glui2, false);
+//	
+//	
+//	GLUI_Translation *transY = new GLUI_Translation(glui2, "Move Y", GLUI_TRANSLATION_Y, &objectPos[1]);
+//	transY->set_speed(.005);
+//	new GLUI_Column(glui2, false);
+//	
+//	GLUI_Translation *transZ = new GLUI_Translation(glui2, "Move Z", GLUI_TRANSLATION_Z, &objectPos[2]);
+//	transZ->set_speed(.005);
 	
 #if 0
 	/**** We register the idle callback with GLUI, *not* with GLUT ****/
