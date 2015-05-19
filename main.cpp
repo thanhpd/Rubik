@@ -54,13 +54,16 @@ int size = 2;
 int mainWindow;
 int showRadio = 1;
 int cubeSize = 3;
-float speed = 1.0;
+float speed = 90.0;
 int enableSound = 1;
 float cubeRotate = 1.0;
 float view_rotate[16] = { 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
 float objectPos[] = { 0.0, 0.0, 0.0 };
 
 /** Pointers to the windows and some of the controls we'll create **/
+GLUI *glui, *_startScene;
+GLUI_Spinner *speedSpinner;
+GLUI_Panel *newGamePanel, *setPanel;
 GLUI *gluiMain, *gluiSub;
 bool gluiMainShow, gluiSubShow;
 //GLUI_Spinner *speedSpinner;
@@ -81,6 +84,7 @@ bool fullscreen = false;
 #define HIDE_ID 402
 #define SHOW_ID 403
 #define SPEED_ID 500
+#define INVOKE_ID 501
 
 void setRubikRotationNumber(int num) {
 	myRubik.setRotationNumber(num);
@@ -100,10 +104,10 @@ void myInit(){
  	
  	isCheckingRubik = isRotating = isCheckingCamera = isShuffling = false;
  	
- 	setRubikRotationNumber(90);
+ 	setRubikRotationNumber(speed);
 }
 
-void myDisplay() {
+void myDisplay() {;
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glEnable(GL_DEPTH_TEST);
@@ -425,7 +429,7 @@ void shuffleRubik(int num){
 		shuffleCounter++;
 		if (shuffleCounter == shuffleNum){
 			isShuffling = isRotating = false;
-			setRubikRotationNumber(90);
+			setRubikRotationNumber(speed/1.5);
 		}else{	
 			rotateSliceName = rand() % 3;
 			rotateSliceValue = rand() % n;
@@ -437,7 +441,7 @@ void shuffleRubik(int num){
 
 void shuffleRubik() {
 	isShuffling = isRotating = true;
-	setRubikRotationNumber(30);
+	setRubikRotationNumber(speed);
 	shuffleNum = 12 * n; shuffleCounter = 0;
 	
 	srand(time(NULL));
@@ -472,7 +476,7 @@ void myReshape(int x, int y) {
     glMatrixMode(GL_PROJECTION);
 
     // Reset Matrix
-    glLoadIdentity();
+	glLoadIdentity();
 
     // Set the viewport to be the entire window
     glViewport(0, 0, tw, th);
@@ -507,7 +511,12 @@ switch (control) {
 		myReshape(tx, ty);
 		shuffleRubik();
 		break;
-}
+	case INVOKE_ID:
+		_startScene = GLUI_Master.create_glui("Start Game");
+		new GLUI_StaticText( _startScene, "Add your widgets" );
+		glutHideWindow();
+		break;
+	}
 	glutPostRedisplay();
 }
 
@@ -580,7 +589,7 @@ void mainScene() {
 	GLUI_StaticText *spinText = new GLUI_StaticText(setPanel, "Spin Speed");
 	spinText->set_alignment(GLUI_ALIGN_CENTER);
 	GLUI_Scrollbar *speedBar = new GLUI_Scrollbar(setPanel, "Spin speed:", GLUI_SCROLL_HORIZONTAL, &speed, SPEED_ID, controlCallback);
-	speedBar->set_float_limits(1.0, 10.0);
+	speedBar->set_float_limits(15.0, 180.0);
 	new GLUI_StaticText(setPanel, "");
 	
 	new GLUI_Checkbox(setPanel, "Enable Sound", &enableSound);
@@ -590,6 +599,13 @@ void mainScene() {
 	new GLUI_StaticText( glui, "" );
 	
 	/** A 'quit' button **/
+	new GLUI_Button(glui, "Quit", 0,(GLUI_Update_CB)exit);
+	new GLUI_StaticText( glui, "" );
+	
+	/** TEST INVOKE DIALOG HERE **/
+	new GLUI_Button(glui, "Invoke", INVOKE_ID, controlCallback);
+	new GLUI_StaticText( glui, "" );
+
 	new GLUI_Button(glui, "Quit", 0, (GLUI_Update_CB)exit);
 	
 	/** Link windows to GLUI, and register idle callback **/
