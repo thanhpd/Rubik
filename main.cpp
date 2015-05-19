@@ -118,6 +118,9 @@ void myDisplay() {;
 	glTranslatef(objectPos[0], objectPos[1], -objectPos[2]); 
 //	glMultMatrixf(view_rotate);
 	
+	if (isShuffling && gluiMain) gluiMain->disable();
+	else gluiMain->enable();
+	
     glFlush();
     glutSwapBuffers();
 }
@@ -286,7 +289,8 @@ bool findIntersectionWithRubikFace(Point3D &intersection, int &slideName, int &c
 }
 
 void myMouse(int button, int state, int x, int y){
-	if (gluiSubShow) return;
+	if (gluiSubShow || isShuffling) return;
+	
 	if (state == GLUT_DOWN){ // mouse click
 		findNearAndFarPoint(x, y);
 		Point3D p;
