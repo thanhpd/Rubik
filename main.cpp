@@ -59,7 +59,7 @@ float view_rotate[16] = { 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
 float objectPos[] = { 0.0, 0.0, 0.0 };
 
 /** Pointers to the windows and some of the controls we'll create **/
-GLUI *glui, *glui2;
+GLUI *glui, *startScene;
 GLUI_Spinner *speedSpinner;
 GLUI_Panel *newGamePanel, *setPanel;
 
@@ -76,6 +76,7 @@ GLUI_Panel *newGamePanel, *setPanel;
 #define HIDE_ID 402
 #define SHOW_ID 403
 #define SPEED_ID 500
+#define INVOKE_ID 501
 
 void setRubikRotationNumber(int num){
 	myRubik.setRotationNumber(num);
@@ -98,7 +99,7 @@ void myInit(){
  	setRubikRotationNumber(90);
 }
 
-void myDisplay() {
+void myDisplay() {;
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glEnable(GL_DEPTH_TEST);
@@ -433,7 +434,7 @@ void myReshape(int x, int y) {
 	// Use the Projection Matrix
 	glMatrixMode(GL_PROJECTION);
 
-        // Reset Matrix
+    // Reset Matrix
 	glLoadIdentity();
 
 	// Set the viewport to be the entire window
@@ -461,6 +462,10 @@ void controlCallback(int control) {
 		GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
 		myReshape(tx, ty);
 		shuffleRubik();
+	} else if (control == INVOKE_ID) {
+		startScene = GLUI_Master.create_glui("Start Game");
+		new GLUI_StaticText( startScene, "Add your widgets" );
+		glutHideWindow();
 	}
 }
 
@@ -545,6 +550,11 @@ int main(int argc, char** argv) {
 	
 	/** A 'quit' button **/
 	new GLUI_Button(glui, "Quit", 0,(GLUI_Update_CB)exit);
+	new GLUI_StaticText( glui, "" );
+	
+	/** TEST INVOKE DIALOG HERE **/
+	new GLUI_Button(glui, "Invoke", INVOKE_ID, controlCallback);
+	new GLUI_StaticText( glui, "" );
 	
 	/** Link windows to GLUI, and register idle callback **/
 	glui->set_main_gfx_window( mainWindow );
