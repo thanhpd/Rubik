@@ -18,8 +18,10 @@ using namespace std;
 #include <GL/glui.h>
 #endif
 
-const int screenWidth = 600;
+const int screenWidth = 800;
 const int screenHeight = 600;
+const int screenPosX = 100;
+const int screenPosY = 100;
 const char *screenTitle = "Rubik";
 
 int rotationNum;
@@ -52,16 +54,22 @@ int size = 2;
 int mainWindow;
 int showRadio = 1;
 int cubeSize = 5;
-float speed = 1.0;
+float speed = 90.0;
 int enableSound = 1;
 float cubeRotate = 1.0;
 float view_rotate[16] = { 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
 float objectPos[] = { 0.0, 0.0, 0.0 };
 
 /** Pointers to the windows and some of the controls we'll create **/
-GLUI *glui, *startScene;
+GLUI *glui, *_startScene;
 GLUI_Spinner *speedSpinner;
 GLUI_Panel *newGamePanel, *setPanel;
+GLUI *gluiMain, *gluiSub;
+bool gluiMainShow, gluiSubShow;
+//GLUI_Spinner *speedSpinner;
+//GLUI_Panel *newGamePanel, *setPanel;
+
+bool fullscreen = false;
 
 /** User IDs for callbacks **/
 #define GAME_MODE_ID 200
@@ -78,7 +86,7 @@ GLUI_Panel *newGamePanel, *setPanel;
 #define SPEED_ID 500
 #define INVOKE_ID 501
 
-void setRubikRotationNumber(int num){
+void setRubikRotationNumber(int num) {
 	myRubik.setRotationNumber(num);
 	rotationNum = num;
 	deltaAngle = 90.0 / num;
@@ -96,7 +104,7 @@ void myInit(){
  	
  	isCheckingRubik = isRotating = isCheckingCamera = isShuffling = false;
  	
- 	setRubikRotationNumber(90);
+ 	setRubikRotationNumber(speed);
 }
 
 void myDisplay() {;
@@ -111,6 +119,35 @@ void myDisplay() {;
 //	glMultMatrixf(view_rotate);
     glFlush();
     glutSwapBuffers();
+}
+
+void myDisplayStart() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+//    glEnable(GL_DEPTH_TEST);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    
+    
+    
+    glFlush();
+    glutSwapBuffers();
+}
+
+void myKeyboard(unsigned char key, int x, int y) {
+	switch(key) {
+		case 'f': 
+			if(!fullscreen) {
+	        	glutFullScreen();
+	        	fullscreen = true;
+	    	} else if(fullscreen){
+	        	glutReshapeWindow(screenWidth, screenHeight);
+	        	glutPositionWindow(screenPosX, screenPosY);
+	        	fullscreen = false;
+	        }
+	        break;
+	}
+	
+	glutPostRedisplay();
 }
 
 void findNearAndFarPoint(int x, int y){
@@ -248,6 +285,7 @@ bool findIntersectionWithRubikFace(Point3D &intersection, int &slideName, int &c
 }
 
 void myMouse(int button, int state, int x, int y){
+	if (gluiSubShow) return;
 	if (state == GLUT_DOWN){ // mouse click
 		findNearAndFarPoint(x, y);
 		Point3D p;
@@ -377,6 +415,7 @@ void myMotion(int x, int y){
 	}
 }
 
+
 void shuffleRubik(int num){
 	if (num < rotationNum){
 		myRubik.rotate(rotateSliceName, rotateSliceValue, rotateAngle);
@@ -389,7 +428,7 @@ void shuffleRubik(int num){
 		shuffleCounter++;
 		if (shuffleCounter == shuffleNum){
 			isShuffling = isRotating = false;
-			setRubikRotationNumber(90);
+			setRubikRotationNumber(speed/1.5);
 		}else{	
 			rotateSliceName = rand() % 3;
 			rotateSliceValue = rand() % n;
@@ -401,7 +440,7 @@ void shuffleRubik(int num){
 
 void shuffleRubik(){
 	isShuffling = isRotating = true;
-	setRubikRotationNumber(30);
+	setRubikRotationNumber(speed);
 	shuffleNum = 12 * n; shuffleCounter = 0;
 	
 	srand(time(NULL));
@@ -424,51 +463,61 @@ void mySpecial(int key, int x, int y){
 	glutPostRedisplay();
 }
 
+
 void myReshape(int x, int y) {
 	int tx, ty, tw, th;
-	GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
-	if(th == 0)
-		th = 1;
-	float ratio = 1.0* tw / th;
+    GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
+    if(th == 0)
+            th = 1;
+    float ratio = 1.0* tw / th;
 
-	// Use the Projection Matrix
-	glMatrixMode(GL_PROJECTION);
+    // Use the Projection Matrix
+    glMatrixMode(GL_PROJECTION);
 
     // Reset Matrix
 	glLoadIdentity();
 
-	// Set the viewport to be the entire window
-	glViewport(0, 0, tw, th);
+    // Set the viewport to be the entire window
+    glViewport(0, 0, tw, th);
 
-	// Set the correct perspective.
-	gluPerspective(45,ratio,1,1000);
+    // Set the correct perspective.
+    gluPerspective(45,ratio,1,1000);
 
-	// Get Back to the Modelview
-	glMatrixMode(GL_MODELVIEW);
-	glutPostRedisplay();
+    // Get Back to the Modelview
+    glMatrixMode(GL_MODELVIEW);
+    glutPostRedisplay();
 }
 
 void controlCallback(int control) {
-	if (control == RESET_GAME_ID) {
+switch (control) {
+	int tx, ty, tw, th;
+	case RESET_GAME_ID:
 		myInit();
-		int tx, ty, tw, th;
 		GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
 		myReshape(tx, ty);
 		shuffleRubik();
-	} else if (control == START_NEW_GAME_ID) {
+		break;
+	case START_NEW_GAME_ID:
+		gluiMain->show();
+		gluiMainShow = true;
+		
+		gluiSub->hide();
+		gluiSubShow = false;
+		
 		n = cubeSize;
 		myInit();
-		int tx, ty, tw, th;
 		GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
 		myReshape(tx, ty);
 		shuffleRubik();
-	} else if (control == INVOKE_ID) {
-		startScene = GLUI_Master.create_glui("Start Game");
-		new GLUI_StaticText( startScene, "Add your widgets" );
+		break;
+	case INVOKE_ID:
+		_startScene = GLUI_Master.create_glui("Start Game");
+		new GLUI_StaticText( _startScene, "Add your widgets" );
 		glutHideWindow();
+		break;
 	}
+	glutPostRedisplay();
 }
-
 
 void myGlutIdle( void ){
   /* According to the GLUT specification, the current window is 
@@ -482,64 +531,62 @@ void myGlutIdle( void ){
   glutPostRedisplay();
 }
 
-int main(int argc, char** argv) {
-	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-	glutInitWindowSize(screenWidth, screenHeight);
-	
-	mainWindow = glutCreateWindow(screenTitle);
-	GLUI_Master.set_glutReshapeFunc(myReshape);
-	GLUI_Master.set_glutDisplayFunc(myDisplay);
-	GLUI_Master.set_glutSpecialFunc(mySpecial);
-	GLUI_Master.set_glutMouseFunc(myMouse);
-	//glutReshapeFunc(myReshape);
-//	glutDisplayFunc(myDisplay);
-//	glutSpecialFunc(mySpecial);
-//	glutMouseFunc(myMouse);
-	glutMotionFunc(myMotion);
-	
-	myInit();
-	shuffleRubik();
-	
+void startScene() {
+	int w = glutGet(GLUT_SCREEN_WIDTH);
+	int h = glutGet(GLUT_SCREEN_HEIGHT);
+	int sW = 200;
+	int sH = 300;	
 	/** Create the side subwindow **/
-   	glui = GLUI_Master.create_glui_subwindow( mainWindow, GLUI_SUBWINDOW_RIGHT );
+   	GLUI *glui = GLUI_Master.create_glui_subwindow( mainWindow );
    	
-   	newGamePanel = new GLUI_Rollout(glui, "New game", false);
+   	glui->add_statictext("Setup your RubiKA Game");
+   	glui->add_separator();
    	
-   	/** Control for object params **/
+   	glui->add_statictext("");
    	
-   	GLUI_Panel *mode = new GLUI_Panel(newGamePanel, "Game mode");
+   	GLUI_Panel *mode = new GLUI_Panel(glui, "Game mode" );
    	GLUI_RadioGroup *modeGroup = new GLUI_RadioGroup(mode, &showRadio, GAME_MODE_ID, controlCallback);
    	new GLUI_RadioButton(modeGroup, "Time mode");
    	new GLUI_RadioButton(modeGroup, "Classic mode");
+   	modeGroup->set_alignment(GLUI_ALIGN_CENTER);
    	
-   	GLUI_Spinner *cubeSizeSpinner = new GLUI_Spinner(newGamePanel, "Cube's size:", &cubeSize);
+   	glui->add_statictext("");
+   	
+   	GLUI_Spinner *cubeSizeSpinner = new GLUI_Spinner(glui, "Cube's size:", &cubeSize);
    	cubeSizeSpinner->set_int_limits(2, 10);
    	cubeSizeSpinner->set_alignment(GLUI_ALIGN_RIGHT);
+   	
+   	glui->add_statictext("");
+
+	new GLUI_Button(glui, "START GAME", START_NEW_GAME_ID, controlCallback);
 	
-	new GLUI_StaticText(newGamePanel, "");
+	glui->add_statictext("");
+	glui->add_separator();
+	glui->add_statictext("Note: Press f for toggle screen mode");
 	
-	new GLUI_Button(newGamePanel, "START GAME", START_NEW_GAME_ID, controlCallback);
-	new GLUI_StaticText(glui, "");
-	
-	///*** Disable/Enable buttons ***/
-//	new GLUI_Button(glui, "Disable movement", DISABLE_ID, controlCallback);
-//	new GLUI_Button(glui, "Enable movement", ENABLE_ID, controlCallback);
-//	new GLUI_Button(glui, "Hide", HIDE_ID, controlCallback);
-//	new GLUI_Button(glui, "Show", SHOW_ID, controlCallback);
-//	new GLUI_StaticText(glui, "");
-	
+	gluiSub = glui;
+}
+
+void mainScene() {
+	GLUI_Spinner *speedSpinner;
+	GLUI_Panel *newGamePanel, *setPanel;
+	/** Create the side subwindow **/
+   	GLUI *glui = GLUI_Master.create_glui_subwindow( mainWindow );
+   	
+   	glui->add_statictext("RubiKA Game");
+   	glui->add_separator();
+   	glui->add_statictext("");
+   	
 	/** Reset game button **/
-	new GLUI_Button(glui, "RESET GAME", RESET_GAME_ID, controlCallback);
-	new GLUI_StaticText(glui, "");
+	new GLUI_Button(glui, "RESTART GAME", RESET_GAME_ID, controlCallback);
 	
 	/** Setting section **/
-	setPanel = new GLUI_Rollout(glui, "Setting", false);
+	setPanel = new GLUI_Panel(glui, "Setting", false);
 	new GLUI_StaticText(setPanel, "");
 	GLUI_StaticText *spinText = new GLUI_StaticText(setPanel, "Spin Speed");
 	spinText->set_alignment(GLUI_ALIGN_CENTER);
 	GLUI_Scrollbar *speedBar = new GLUI_Scrollbar(setPanel, "Spin speed:", GLUI_SCROLL_HORIZONTAL, &speed, SPEED_ID, controlCallback);
-	speedBar->set_float_limits(1.0, 10.0);
+	speedBar->set_float_limits(15.0, 180.0);
 	new GLUI_StaticText(setPanel, "");
 	
 	new GLUI_Checkbox(setPanel, "Enable Sound", &enableSound);
@@ -555,9 +602,42 @@ int main(int argc, char** argv) {
 	/** TEST INVOKE DIALOG HERE **/
 	new GLUI_Button(glui, "Invoke", INVOKE_ID, controlCallback);
 	new GLUI_StaticText( glui, "" );
+
+	new GLUI_Button(glui, "Quit", 0, (GLUI_Update_CB)exit);
 	
 	/** Link windows to GLUI, and register idle callback **/
 	glui->set_main_gfx_window( mainWindow );
+	
+	glui->add_statictext("");
+	glui->add_separator();
+	glui->add_statictext("Note: Press f for toggle screen mode");
+	
+	gluiMain = glui;
+}
+
+int main(int argc, char** argv) {
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+	glutInitWindowPosition(screenPosX, screenPosY);
+	glutInitWindowSize(screenWidth, screenHeight);
+	mainWindow = glutCreateWindow(screenTitle);
+	
+	GLUI_Master.set_glutReshapeFunc(myReshape);
+	GLUI_Master.set_glutDisplayFunc(myDisplay);
+	GLUI_Master.set_glutKeyboardFunc(myKeyboard);
+	GLUI_Master.set_glutMouseFunc(myMouse);
+	glutMotionFunc(myMotion);
+	
+	myInit(); 
+//	shuffleRubik();
+	
+	mainScene();
+	gluiMain->hide();
+	gluiMainShow = false;
+	
+	startScene();
+	gluiSub->show();
+	gluiSubShow = true;
 
 	/**** We register the idle callback with GLUI, *not* with GLUT ****/
 	GLUI_Master.set_glutIdleFunc( myGlutIdle );
