@@ -30,7 +30,7 @@ double deltaAngle;
 Camera myCam;
 
 Rubik myRubik;
-int n = 5;
+int n = 3;
 Point3D minPoint, maxPoint;
 
 Point3D nearPoint, farPoint;
@@ -53,7 +53,7 @@ int shuffleNum, shuffleCounter;
 int size = 2;
 int mainWindow;
 int showRadio = 1;
-int cubeSize = 5;
+int cubeSize = 3;
 float speed = 1.0;
 int enableSound = 1;
 float cubeRotate = 1.0;
@@ -113,6 +113,7 @@ void myDisplay() {
 //	glTranslatef( 0.0, 0.0, -2.6f );
 	glTranslatef(objectPos[0], objectPos[1], -objectPos[2]); 
 //	glMultMatrixf(view_rotate);
+	
     glFlush();
     glutSwapBuffers();
 }
@@ -434,7 +435,7 @@ void shuffleRubik(int num){
 	}
 }
 
-void shuffleRubik(){
+void shuffleRubik() {
 	isShuffling = isRotating = true;
 	setRubikRotationNumber(30);
 	shuffleNum = 12 * n; shuffleCounter = 0;
@@ -569,6 +570,8 @@ void mainScene() {
    	glui->add_statictext("");
    	
 	/** Reset game button **/
+	new GLUI_Button(glui, "Shuffle Rubik", RESET_GAME_ID, controlCallback);
+	glui->add_statictext("");
 	new GLUI_Button(glui, "RESTART GAME", RESET_GAME_ID, controlCallback);
 	
 	/** Setting section **/
@@ -613,7 +616,6 @@ int main(int argc, char** argv) {
 	glutMotionFunc(myMotion);
 	
 	myInit(); 
-//	shuffleRubik();
 	
 	mainScene();
 	gluiMain->hide();
