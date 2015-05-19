@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <cmath>
 #include <iostream>
+#include <sstream>
 #include <ctime>
 #include "Point3D.h"
 #include "Vector3D.h"
@@ -54,6 +55,7 @@ int size = 2;
 int mainWindow;
 int showRadio = 1;
 int cubeSize = 3;
+int timer = 5;
 float speed = 90.0;
 int enableSound = 1;
 float cubeRotate = 1.0;
@@ -68,8 +70,16 @@ GLUI *gluiMain, *gluiSub;
 bool gluiMainShow, gluiSubShow;
 //GLUI_Spinner *speedSpinner;
 //GLUI_Panel *newGamePanel, *setPanel;
+GLUI_RadioGroup *modeGroup;
+GLUI_Spinner *spinnerTimer;
+GLUI_StaticText *timeRemain;
 
 bool fullscreen = false;
+bool timeModeGame = false;
+bool timeOutGame = false;
+
+//int FPS = 60;
+int currentTime = 0;
 
 /** User IDs for callbacks **/
 #define GAME_MODE_ID 200
@@ -122,18 +132,8 @@ void myDisplay() {;
 	if (isShuffling && gluiMain) gluiMain->disable();
 	else gluiMain->enable();
 	
-    glFlush();
-    glutSwapBuffers();
-}
-
-void myDisplayStart() {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-//    glEnable(GL_DEPTH_TEST);
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    
-    
-    
+	if (!timeModeGame) timeRemain->disable();
+	
     glFlush();
     glutSwapBuffers();
 }
@@ -290,7 +290,7 @@ bool findIntersectionWithRubikFace(Point3D &intersection, int &slideName, int &c
 }
 
 void myMouse(int button, int state, int x, int y){
-	if (gluiSubShow || isShuffling) return;
+	if (gluiSubShow || isShuffling || timeOutGame) return;
 	
 	if (state == GLUT_DOWN){ // mouse click
 		findNearAndFarPoint(x, y);
@@ -421,7 +421,6 @@ void myMotion(int x, int y){
 	}
 }
 
-
 void shuffleRubik(int num){
 	if (num < rotationNum){
 		myRubik.rotate(rotateSliceName, rotateSliceValue, rotateAngle);
@@ -434,7 +433,7 @@ void shuffleRubik(int num){
 		shuffleCounter++;
 		if (shuffleCounter == shuffleNum){
 			isShuffling = isRotating = false;
-			setRubikRotationNumber(speed/1.5);
+			setRubikRotationNumber(speed/2);
 		}else{	
 			rotateSliceName = rand() % 3;
 			rotateSliceValue = rand() % n;
@@ -446,7 +445,7 @@ void shuffleRubik(int num){
 
 void shuffleRubik() {
 	isShuffling = isRotating = true;
-	setRubikRotationNumber(speed);
+	setRubikRotationNumber(speed/2);
 	shuffleNum = 12 * n; shuffleCounter = 0;
 	
 	srand(time(NULL));
@@ -494,6 +493,22 @@ void myReshape(int x, int y) {
     glutPostRedisplay();
 }
 
+void gameTimer(int v) {
+	string base = "Time remaining (in seconds): ";
+    char* buf = new char;
+    string s = base + itoa(timer * 10- currentTime, buf, 10);
+    timeRemain->set_text(s.c_str());
+    if (!isShuffling) currentTime += 1;
+    if (currentTime > timer * 10) {
+    	timeOutGame = true;
+       	timeRemain->set_text("Time out! Press restart to start again!");
+       	delete buf;
+      	return;
+    }
+    glutPostRedisplay();
+  	glutTimerFunc(v, gameTimer, v);
+}
+
 void controlCallback(int control) {
 switch (control) {
 	int tx, ty, tw, th;
@@ -502,8 +517,13 @@ switch (control) {
 		GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
 		myReshape(tx, ty);
 		shuffleRubik();
+		if (timeModeGame) {
+			currentTime = 0;
+			timeRemain->enable();
+			gameTimer(1000);
+		}
 		break;
-	case START_NEW_GAME_ID:
+	case START_NEW_GAME_ID:		
 		gluiMain->show();
 		gluiMainShow = true;
 		
@@ -515,6 +535,12 @@ switch (control) {
 		GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
 		myReshape(tx, ty);
 		shuffleRubik();
+		if (timeModeGame) {
+			currentTime = 0;
+			timeRemain->enable();
+			gameTimer(1000);
+		} 
+
 		break;
 	case RESTART_GAME_ID:
 		gluiMain->hide();
@@ -526,6 +552,13 @@ switch (control) {
 		myInit();
 		GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
 		myReshape(tx, ty);
+		
+		currentTime = 0;
+		break;
+	case GAME_MODE_ID:
+		modeGroup->get_int_val() == 0 ? timeModeGame = true : timeModeGame = false;
+		if (timeModeGame) spinnerTimer->enable();
+		else spinnerTimer->disable();
 		break;
 	}
 	glutPostRedisplay();
@@ -557,16 +590,22 @@ void startScene() {
    	glui->add_statictext("");
    	
    	GLUI_Panel *mode = new GLUI_Panel(glui, "Game mode" );
-   	GLUI_RadioGroup *modeGroup = new GLUI_RadioGroup(mode, &showRadio, GAME_MODE_ID, controlCallback);
+   	modeGroup = new GLUI_RadioGroup(mode, &showRadio, GAME_MODE_ID, controlCallback);
    	new GLUI_RadioButton(modeGroup, "Time mode");
    	new GLUI_RadioButton(modeGroup, "Classic mode");
    	modeGroup->set_alignment(GLUI_ALIGN_CENTER);
+   	
+   	spinnerTimer = new GLUI_Spinner(glui, "Set your timer (in minutes):", &timer);
+   	spinnerTimer->set_int_limits(1, 30);
+   	spinnerTimer->set_alignment(GLUI_ALIGN_CENTER);
+   	if (timeModeGame) spinnerTimer->enable();
+	else spinnerTimer->disable();
    	
    	glui->add_statictext("");
    	
    	GLUI_Spinner *cubeSizeSpinner = new GLUI_Spinner(glui, "Cube's size:", &cubeSize);
    	cubeSizeSpinner->set_int_limits(2, 10);
-   	cubeSizeSpinner->set_alignment(GLUI_ALIGN_RIGHT);
+   	cubeSizeSpinner->set_alignment(GLUI_ALIGN_CENTER);
    	
    	glui->add_statictext("");
 
@@ -587,8 +626,9 @@ void mainScene() {
    	
    	glui->add_statictext("RubiKA Game");
    	glui->add_separator();
-   	glui->add_statictext("");
    	
+   	glui->add_statictext("");
+
 	/** Reset game button **/
 	new GLUI_Button(glui, "Shuffle Rubik", RESET_GAME_ID, controlCallback);
 	glui->add_statictext("");
@@ -618,6 +658,9 @@ void mainScene() {
 	glui->add_statictext("");
 	glui->add_separator();
 	glui->add_statictext("Note: Press f for toggle screen mode");
+	
+	glui->add_statictext("");
+	timeRemain = new GLUI_StaticText(glui, "Time remaining (in seconds): ");
 	
 	gluiMain = glui;
 }
