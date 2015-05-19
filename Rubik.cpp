@@ -47,6 +47,13 @@ GLuint Rubik::loadTexture(string imageName){
 	return id;
 }
 
+//GLuint Rubik::loadTexture(char* imageName){
+//	Image *image = loadBMP(imageName);
+//	GLuint id = loadTexture(image);
+//	delete image;
+//	return id;
+//}
+
 void Rubik::init() {
 	initCubeMatrix();
 	
@@ -108,6 +115,9 @@ void Rubik::init() {
 			for (int z = 0; z < n; z++)
 				cube[x][y][z].set(faceX[x][y][z], faceX[x + 1][y][z], faceY[x][y][z], faceY[x][y + 1][z],
 										faceZ[x][y][z], faceZ[x][y][z + 1]);
+	
+	/* initialize the number of rotation */
+	rotationNumber = 90;
 }
 
 void Rubik::draw() {
@@ -189,4 +199,12 @@ void Rubik::setSize(int n){
 
 int Rubik::getSize(){
 	return n;
+}
+
+void Rubik::setRotationNumber(int rotationNumber){
+	this->rotationNumber = rotationNumber;
+}
+
+int Rubik::getRotationNumber(){
+	return rotationNumber;
 }

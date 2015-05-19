@@ -59,7 +59,7 @@ public:
     
     /* change the camera such as the rubik look like rotate about the aixs that
     perpendicular with the view plane */
-    void rotate_clockwise(float _angle);
+    void rotate(float _angle);
 };
 
 #endif

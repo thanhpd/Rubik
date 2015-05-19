@@ -20,8 +20,9 @@ using namespace std;
 const int screenWidth = 600;
 const int screenHeight = 600;
 const char *screenTitle = "Rubik";
-const int rotationNum = 90;
-const double deltaAngle = 90.0 / rotationNum;
+
+int rotationNum;
+double deltaAngle;
 
 Camera myCam;
 
@@ -84,6 +85,10 @@ void myInit(){
  	myCam.setShape(45.0f, 1.0, 0.1f, 100.0f);
  	
  	isCheckingRubik = isRotating = isCheckingCamera = false;
+ 	
+ 	myRubik.setRotationNumber(900);
+ 	rotationNum = myRubik.getRotationNumber();
+ 	deltaAngle = 90.0 / rotationNum;
 }
 
 void myDisplay() {
@@ -100,12 +105,12 @@ void myDisplay() {
     glutSwapBuffers();
 }
 
-void myKeyboard(unsigned char key, int x, int y) {
+void mySpecial(int key, int x, int y){
 	switch(key){
-		case '+': myCam.slide(0, 0, -0.2); break;
-		case '-': myCam.slide(0, 0, 0.2); break;
-		case 'c': myCam.rotate_clockwise(5.0); break;
-		case 'v': myCam.rotate_clockwise(-5.0); break;
+		case GLUT_KEY_UP: myCam.slide(0, 0, -0.2); break;
+		case GLUT_KEY_DOWN: myCam.slide(0, 0, 0.2); break;
+		case GLUT_KEY_LEFT: myCam.rotate(5.0); break;
+		case GLUT_KEY_RIGHT: myCam.rotate(-5.0); break;
 	}
 	
 	glutPostRedisplay();
@@ -435,7 +440,7 @@ int main(int argc, char** argv) {
 	mainWindow = glutCreateWindow(screenTitle);
 	GLUI_Master.set_glutReshapeFunc(myReshape);
 	GLUI_Master.set_glutDisplayFunc(myDisplay);
-	GLUI_Master.set_glutKeyboardFunc(myKeyboard);
+	GLUI_Master.set_glutSpecialFunc(mySpecial);
 	GLUI_Master.set_glutMouseFunc(myMouse);
 	glutMotionFunc(myMotion);
 	
