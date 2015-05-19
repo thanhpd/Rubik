@@ -14,6 +14,7 @@ using namespace std;
 #include <GL/glut.h>
 #include <GL/glu.h>
 #include <GL/gl.h>
+#include <GL/glui.h>
 #endif
 
 const int screenWidth = 600;
@@ -41,6 +42,37 @@ double rotateAngle;
 bool isCheckingCamera;
 int camX, camY;
 
+/** Live variables passed into GLUI **/
+int size = 2;
+int mainWindow;
+int showRadio = 1;
+int cubeSize = 2;
+float speed = 1.0;
+int enableSound = 1;
+float cubeRotate = 1.0;
+float view_rotate[16] = { 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
+float objectPos[] = { 0.0, 0.0, 0.0 };
+
+/** Pointers to the windows and some of the controls we'll create **/
+GLUI *glui, *glui2;
+GLUI_Spinner *speedSpinner;
+GLUI_Panel *newGamePanel, *setPanel;
+
+/** User IDs for callbacks **/
+#define GAME_MODE_ID 200
+#define CLASSIC_MODE_ID 201
+#define TIME_MODE_ID 202
+#define CUBE_SIZE_ID 300
+#define START_NEW_GAME_ID 199
+#define RESET_GAME_ID 198
+#define HELP_ID 100
+#define DISABLE_ID 400
+#define ENABLE_ID 401
+#define HIDE_ID 402
+#define SHOW_ID 403
+#define SPEED_ID 500
+
+
 void myInit(){
 	myRubik.setSize(n);
     myRubik.init();
@@ -60,7 +92,9 @@ void myDisplay() {
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     myRubik.draw();
-
+	
+	glTranslatef(objectPos[0], objectPos[1], -objectPos[2]); 
+	glMultMatrixf(view_rotate);
     glFlush();
     glutSwapBuffers();
 }
@@ -340,18 +374,152 @@ void myMotion(int x, int y){
 	}
 }
 
+void myReshape(int x, int y) {
+	int tx, ty, tw, th;
+	GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
+	if(th == 0)
+		th = 1;
+	float ratio = 1.0* tw / th;
+
+	// Use the Projection Matrix
+	glMatrixMode(GL_PROJECTION);
+
+        // Reset Matrix
+	glLoadIdentity();
+
+	// Set the viewport to be the entire window
+	glViewport(0, 0, tw, th);
+
+	// Set the correct perspective.
+	gluPerspective(45,ratio,1,1000);
+
+	// Get Back to the Modelview
+	glMatrixMode(GL_MODELVIEW);
+	glutPostRedisplay();
+}
+
+void controlCallback(int control) {
+	if ( control == ENABLE_ID ) {
+		glui2->enable();
+	} else if ( control == DISABLE_ID ) {
+	    glui2->disable();
+	} else if ( control == SHOW_ID ) {
+	    glui2->show();
+	} else if ( control == HIDE_ID ) {
+	    glui2->hide();
+	}
+}
+
+
+void myGlutIdle( void )
+{
+  /* According to the GLUT specification, the current window is 
+     undefined during an idle callback.  So we need to explicitly change
+     it if necessary */
+  if(glutGetWindow() != mainWindow) {
+  	glutSetWindow(mainWindow); 	
+  }
+
+  /*  GLUI_Master.sync_live_all();  -- not needed - nothing to sync in this
+                                       application  */
+
+  glutPostRedisplay();
+}
+
 int main(int argc, char** argv) {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 	glutInitWindowSize(screenWidth, screenHeight);
 	
-	glutCreateWindow(screenTitle);
-	glutDisplayFunc(myDisplay);
-	glutKeyboardFunc(myKeyboard);
-	glutMouseFunc(myMouse);
+	mainWindow = glutCreateWindow(screenTitle);
+	GLUI_Master.set_glutReshapeFunc(myReshape);
+	GLUI_Master.set_glutDisplayFunc(myDisplay);
+	GLUI_Master.set_glutKeyboardFunc(myKeyboard);
+	GLUI_Master.set_glutMouseFunc(myMouse);
 	glutMotionFunc(myMotion);
 	
 	myInit();
+	
+	/** Create the side subwindow **/
+   	glui = GLUI_Master.create_glui_subwindow( mainWindow, GLUI_SUBWINDOW_RIGHT );
+   	
+   	newGamePanel = new GLUI_Rollout(glui, "New game", false);
+   	
+   	/** Control for object params **/
+   	
+   	GLUI_Panel *mode = new GLUI_Panel(newGamePanel, "Game mode");
+   	GLUI_RadioGroup *modeGroup = new GLUI_RadioGroup(mode, &showRadio, GAME_MODE_ID, controlCallback);
+   	new GLUI_RadioButton(modeGroup, "Time mode");
+   	new GLUI_RadioButton(modeGroup, "Classic mode");
+   	
+   	GLUI_Spinner *cubeSizeSpinner = new GLUI_Spinner(newGamePanel, "Cube's size:", &cubeSize);
+   	cubeSizeSpinner->set_int_limits(2, 10);
+   	cubeSizeSpinner->set_alignment(GLUI_ALIGN_RIGHT);
+	
+	new GLUI_StaticText(newGamePanel, "");
+	
+	new GLUI_Button(newGamePanel, "START GAME", START_NEW_GAME_ID, controlCallback);
+	new GLUI_StaticText(glui, "");
+	
+	/*** Disable/Enable buttons ***/
+	new GLUI_Button(glui, "Disable movement", DISABLE_ID, controlCallback);
+	new GLUI_Button(glui, "Enable movement", ENABLE_ID, controlCallback);
+	new GLUI_Button(glui, "Hide", HIDE_ID, controlCallback);
+	new GLUI_Button(glui, "Show", SHOW_ID, controlCallback);
+	new GLUI_StaticText(glui, "");
+	
+	/** Reset game button **/
+	new GLUI_Button(glui, "RESET GAME", RESET_GAME_ID, controlCallback);
+	new GLUI_StaticText(glui, "");
+	
+	/** Setting section **/
+	setPanel = new GLUI_Rollout(glui, "Setting", false);
+	new GLUI_StaticText(setPanel, "");
+	GLUI_StaticText *spinText = new GLUI_StaticText(setPanel, "Spin Speed");
+	spinText->set_alignment(GLUI_ALIGN_CENTER);
+	GLUI_Scrollbar *speedBar = new GLUI_Scrollbar(setPanel, "Spin speed:", GLUI_SCROLL_HORIZONTAL, &speed, SPEED_ID, controlCallback);
+	speedBar->set_float_limits(1.0, 10.0);
+	new GLUI_StaticText(setPanel, "");
+	
+	new GLUI_Checkbox(setPanel, "Enable Sound", &enableSound);
+	
+	/** A 'help' button **/
+	new GLUI_Button(glui, "Help", HELP_ID, controlCallback);
+	new GLUI_StaticText( glui, "" );
+	
+	/** A 'quit' button **/
+	new GLUI_Button(glui, "Quit", 0,(GLUI_Update_CB)exit);
+	
+	/** Link windows to GLUI, and register idle callback **/
+	glui->set_main_gfx_window( mainWindow );
+	
+	/** Create the bottom subwindow **/
+	glui2 = GLUI_Master.create_glui_subwindow(mainWindow, GLUI_SUBWINDOW_BOTTOM);
+	glui2->set_main_gfx_window(mainWindow);
+	
+	GLUI_Rotation *viewRotation = new GLUI_Rotation(glui2, "Cube rotation", view_rotate);
+	viewRotation->set_spin(0.1);
+	new GLUI_Column(glui2, false);
+	
+	GLUI_Translation *transXY = new GLUI_Translation(glui2, "Move XY", GLUI_TRANSLATION_XY, objectPos);
+	transXY->set_speed(.005);
+	new GLUI_Column(glui2, false);
+	
+	GLUI_Translation *transX = new GLUI_Translation(glui2, "Move X", GLUI_TRANSLATION_X, objectPos);
+	transX->set_speed(.005);
+	new GLUI_Column(glui2, false);
+	
+	GLUI_Translation *transY = new GLUI_Translation(glui2, "Move Y", GLUI_TRANSLATION_Y, &objectPos[1]);
+	transY->set_speed(.005);
+	new GLUI_Column(glui2, false);
+	
+	GLUI_Translation *transZ = new GLUI_Translation(glui2, "Move Z", GLUI_TRANSLATION_Z, &objectPos[2]);
+	transZ->set_speed(.005);
+	
+#if 0
+	/**** We register the idle callback with GLUI, *not* with GLUT ****/
+	GLUI_Master.set_glutIdleFunc( myGlutIdle );
+#endif
 	
 	glutMainLoop();
 	return 0;
