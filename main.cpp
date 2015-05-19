@@ -25,9 +25,6 @@ const int screenPosX = 100;
 const int screenPosY = 100;
 const char *screenTitle = "Rubik";
 
-int rotationNum;
-double deltaAngle;
-
 Camera myCam;
 
 Rubik myRubik;
@@ -42,7 +39,7 @@ double planeValue;
 
 int rotateSliceName, rotateSliceValue;
 bool isCheckingRubik, isRotating;
-double rotateAngle;
+double rotateAngle, rotatedAngle;
 
 bool isCheckingCamera;
 int camX, camY;
@@ -56,7 +53,7 @@ int mainWindow;
 int showRadio = 1;
 int cubeSize = 3;
 int timer = 5;
-float speed = 90.0;
+float speed = 2;
 int enableSound = 1;
 float cubeRotate = 1.0;
 float view_rotate[16] = { 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
@@ -97,11 +94,11 @@ int currentTime = 0;
 #define SPEED_ID 500
 #define INVOKE_ID 501
 
-void setRubikRotationNumber(int num) {
-	myRubik.setRotationNumber(num);
-	rotationNum = num;
-	deltaAngle = 90.0 / num;
-}
+//void setRubikRotationNumber(int num) {
+//	myRubik.setRotationNumber(num);
+//	rotationNum = num;
+//	speed = 90.0 / num;
+//}
 
 void myInit(){
 	myRubik.setSize(n);
@@ -114,8 +111,6 @@ void myInit(){
  	myCam.setShape(45.0f, 1.0, 0.1f, 100.0f);
  	
  	isCheckingRubik = isRotating = isCheckingCamera = isShuffling = false;
- 	
- 	setRubikRotationNumber(speed);
 }
 
 void myDisplay() {;
@@ -343,14 +338,20 @@ Point3D findIntersectionWithPlane(int name, double value){
 	return Point3D(px, py, pz);
 }
 
-void rotateRubik(int num){
-	if (num < rotationNum) {
+void rotateRubik(int ignored){
+	if (rotatedAngle + abs(rotateAngle) < 90.0){
 		myRubik.rotate(rotateSliceName, rotateSliceValue, rotateAngle);
+		rotatedAngle += abs(rotateAngle);
 		glutPostRedisplay();
-		glutTimerFunc(1, rotateRubik, num + 1);
-	} else {
+		glutTimerFunc(1, rotateRubik, 0);
+	}else{
+		double rest = 90.0 - rotatedAngle;
+		if (rotateAngle < 0) rest = -rest;
+		myRubik.rotate(rotateSliceName, rotateSliceValue, rest);
+		glutPostRedisplay();
+		rotatedAngle = 0.0;
 		isRotating = false;
-		int dir = (rotateAngle == -deltaAngle) ? CLOCKWISE : COUNTER_CLOCKWISE;
+		int dir = (rotateAngle < 0) ? CLOCKWISE : COUNTER_CLOCKWISE;
 		myRubik.invertSlice(rotateSliceName, rotateSliceValue, dir);
 	}
 }
@@ -360,42 +361,42 @@ void rotateRubik(Point3D a, Point3D b){
 	double absY = abs(b.getY() - a.getY());
 	double absZ = abs(b.getZ() - a.getZ());
 	
-	// -deltaAngle ~ CLOCKWISE ; deltaAngle ~ COUNTER_CLOCKWISE
+	// -speed ~ CLOCKWISE ; speed ~ COUNTER_CLOCKWISE
 	if (sliceName == SLICE_X){
 		if (absZ > absY){
 			rotateSliceName = SLICE_Y;
 			rotateSliceValue = cubeY;
-			if (cubeX == 0) rotateAngle = (b.getZ() > a.getZ()) ? deltaAngle : -deltaAngle;
-			else rotateAngle = (b.getZ() > a.getZ()) ? -deltaAngle : deltaAngle;
+			if (cubeX == 0) rotateAngle = (b.getZ() > a.getZ()) ? speed : -speed;
+			else rotateAngle = (b.getZ() > a.getZ()) ? -speed : speed;
 		}else{
 			rotateSliceName = SLICE_Z;
 			rotateSliceValue = cubeZ;
-			if (cubeX == 0) rotateAngle = (b.getY() > a.getY()) ? -deltaAngle : deltaAngle;
-			else rotateAngle = (b.getY() > a.getY()) ? deltaAngle : -deltaAngle;
+			if (cubeX == 0) rotateAngle = (b.getY() > a.getY()) ? -speed : speed;
+			else rotateAngle = (b.getY() > a.getY()) ? speed : -speed;
 		}
 	}else if (sliceName == SLICE_Y){
 		if (absZ > absX){
 			rotateSliceName = SLICE_X;
 			rotateSliceValue = cubeX;
-			if (cubeY == 0) rotateAngle = (b.getZ() > a.getZ()) ? -deltaAngle : deltaAngle;
-			else rotateAngle = (b.getZ() > a.getZ()) ? deltaAngle : -deltaAngle;
+			if (cubeY == 0) rotateAngle = (b.getZ() > a.getZ()) ? -speed : speed;
+			else rotateAngle = (b.getZ() > a.getZ()) ? speed : -speed;
 		}else{
 			rotateSliceName = SLICE_Z;
 			rotateSliceValue = cubeZ;
-			if (cubeY == 0) rotateAngle = (b.getX() > a.getX()) ? deltaAngle : -deltaAngle;
-			else rotateAngle = (b.getX() > a.getX()) ? -deltaAngle : deltaAngle;
+			if (cubeY == 0) rotateAngle = (b.getX() > a.getX()) ? speed : -speed;
+			else rotateAngle = (b.getX() > a.getX()) ? -speed : speed;
 		}
 	}else{
 		if (absX > absY){
 			rotateSliceName = SLICE_Y;
 			rotateSliceValue = cubeY;
-			if (cubeZ == 0) rotateAngle = (b.getX() > a.getX()) ? -deltaAngle : deltaAngle;
-			else rotateAngle = (b.getX() > a.getX()) ? deltaAngle : -deltaAngle;
+			if (cubeZ == 0) rotateAngle = (b.getX() > a.getX()) ? -speed : speed;
+			else rotateAngle = (b.getX() > a.getX()) ? speed : -speed;
 		}else{
 			rotateSliceName = SLICE_X;
 			rotateSliceValue = cubeX;
-			if (cubeZ == 0) rotateAngle = (b.getY() > a.getY()) ? deltaAngle : -deltaAngle;
-			else rotateAngle = (b.getY() > a.getY()) ? -deltaAngle : deltaAngle;
+			if (cubeZ == 0) rotateAngle = (b.getY() > a.getY()) ? speed : -speed;
+			else rotateAngle = (b.getY() > a.getY()) ? -speed : speed;
 		}
 	}
 
@@ -421,23 +422,29 @@ void myMotion(int x, int y){
 	}
 }
 
-void shuffleRubik(int num){
-	if (num < rotationNum){
+void shuffleRubik(int ignored){
+	if (rotatedAngle + abs(rotateAngle) < 90){
 		myRubik.rotate(rotateSliceName, rotateSliceValue, rotateAngle);
+		rotatedAngle += abs(rotateAngle);
 		glutPostRedisplay();
-		glutTimerFunc(1, shuffleRubik, num + 1);
+		glutTimerFunc(1, shuffleRubik, 0);
 	}else{
-		int dir = (rotateAngle == -deltaAngle) ? CLOCKWISE : COUNTER_CLOCKWISE;
+		double rest = 90.0 - rotatedAngle;
+		if (rotateAngle < 0) rest = -rest;
+		myRubik.rotate(rotateSliceName, rotateSliceValue, rest);
+		glutPostRedisplay();
+		int dir = (rotateAngle < 0) ? CLOCKWISE : COUNTER_CLOCKWISE;
 		myRubik.invertSlice(rotateSliceName, rotateSliceValue, dir);
-
+		
+		rotatedAngle = 0;
 		shuffleCounter++;
 		if (shuffleCounter == shuffleNum){
 			isShuffling = isRotating = false;
-			setRubikRotationNumber(speed/2);
+			speed /= 2;
 		}else{	
 			rotateSliceName = rand() % 3;
 			rotateSliceValue = rand() % n;
-			rotateAngle = (rand() % 2 == 0) ? deltaAngle : -deltaAngle;
+			rotateAngle = (rand() % 2 == 0) ? speed : -speed;
 			glutTimerFunc(0, shuffleRubik, 0);
 		}
 	}
@@ -445,13 +452,13 @@ void shuffleRubik(int num){
 
 void shuffleRubik() {
 	isShuffling = isRotating = true;
-	setRubikRotationNumber(speed/2);
 	shuffleNum = 12 * n; shuffleCounter = 0;
+	speed *= 2; // double speed when shuffling
 	
 	srand(time(NULL));
 	rotateSliceName = rand() % 3;
 	rotateSliceValue = rand() % n;
-	rotateAngle = (rand() % 2 == 0) ? deltaAngle : -deltaAngle;
+	rotateAngle = (rand() % 2 == 0) ? speed : -speed;
 	
 	glutTimerFunc(0, shuffleRubik, 0);
 }
@@ -462,19 +469,16 @@ void mySpecial(int key, int x, int y){
 		case GLUT_KEY_DOWN: myCam.slide(0, 0, 0.2); break;
 		case GLUT_KEY_LEFT: myCam.rotate(5.0); break;
 		case GLUT_KEY_RIGHT: myCam.rotate(-5.0); break;
-		case GLUT_KEY_HOME: shuffleRubik(); break;
 	}
 	
 	glutPostRedisplay();
 }
 
-
 void myReshape(int x, int y) {
 	int tx, ty, tw, th;
     GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
-    if(th == 0)
-            th = 1;
-    float ratio = 1.0* tw / th;
+    if (th == 0) th = 1;
+    float ratio = 1.0 * tw / th;
 
     // Use the Projection Matrix
     glMatrixMode(GL_PROJECTION);
@@ -486,7 +490,7 @@ void myReshape(int x, int y) {
     glViewport(0, 0, tw, th);
 
     // Set the correct perspective.
-    gluPerspective(45,ratio,1,1000);
+    gluPerspective(45, ratio, 1, 1000);
 
     // Get Back to the Modelview
     glMatrixMode(GL_MODELVIEW);
@@ -510,56 +514,59 @@ void gameTimer(int v) {
 }
 
 void controlCallback(int control) {
-switch (control) {
 	int tx, ty, tw, th;
-	case RESET_GAME_ID:
-		myInit();
-		GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
-		myReshape(tx, ty);
-		shuffleRubik();
-		if (timeModeGame) {
+	switch (control) {
+		case RESET_GAME_ID:
+			myInit();
+			GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
+			myReshape(tx, ty);
+			shuffleRubik();
+			if (timeModeGame) {
+				currentTime = 0;
+				timeRemain->enable();
+				gameTimer(1000);
+			}
+			break;
+		case START_NEW_GAME_ID:		
+			gluiMain->show();
+			gluiMainShow = true;
+			
+			gluiSub->hide();
+			gluiSubShow = false;
+			
+			n = cubeSize;
+			myInit();
+			GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
+			myReshape(tx, ty);
+			shuffleRubik();
+			if (timeModeGame) {
+				currentTime = 0;
+				timeRemain->enable();
+				gameTimer(1000);
+			} 
+	
+			break;
+		case RESTART_GAME_ID:
+			gluiMain->hide();
+			gluiMainShow = false;
+			
+			gluiSub->show();
+			gluiSubShow = true;
+			
+			myInit();
+			GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
+			myReshape(tx, ty);
+			
 			currentTime = 0;
-			timeRemain->enable();
-			gameTimer(1000);
-		}
-		break;
-	case START_NEW_GAME_ID:		
-		gluiMain->show();
-		gluiMainShow = true;
-		
-		gluiSub->hide();
-		gluiSubShow = false;
-		
-		n = cubeSize;
-		myInit();
-		GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
-		myReshape(tx, ty);
-		shuffleRubik();
-		if (timeModeGame) {
-			currentTime = 0;
-			timeRemain->enable();
-			gameTimer(1000);
-		} 
-
-		break;
-	case RESTART_GAME_ID:
-		gluiMain->hide();
-		gluiMainShow = false;
-		
-		gluiSub->show();
-		gluiSubShow = true;
-		
-		myInit();
-		GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
-		myReshape(tx, ty);
-		
-		currentTime = 0;
-		break;
-	case GAME_MODE_ID:
-		modeGroup->get_int_val() == 0 ? timeModeGame = true : timeModeGame = false;
-		if (timeModeGame) spinnerTimer->enable();
-		else spinnerTimer->disable();
-		break;
+			break;
+		case GAME_MODE_ID:
+			modeGroup->get_int_val() == 0 ? timeModeGame = true : timeModeGame = false;
+			if (timeModeGame) spinnerTimer->enable();
+			else spinnerTimer->disable();
+			break;
+		case SPEED_ID:
+			rotateAngle = (rotateAngle > 0) ? speed : -speed;
+			break;
 	}
 	glutPostRedisplay();
 }
@@ -640,7 +647,7 @@ void mainScene() {
 	GLUI_StaticText *spinText = new GLUI_StaticText(setPanel, "Spin Speed");
 	spinText->set_alignment(GLUI_ALIGN_CENTER);
 	GLUI_Scrollbar *speedBar = new GLUI_Scrollbar(setPanel, "Spin speed:", GLUI_SCROLL_HORIZONTAL, &speed, SPEED_ID, controlCallback);
-	speedBar->set_float_limits(15.0, 180.0);
+	speedBar->set_float_limits(0.1, 6);
 	new GLUI_StaticText(setPanel, "");
 	
 	new GLUI_Checkbox(setPanel, "Enable Sound", &enableSound);
@@ -675,6 +682,7 @@ int main(int argc, char** argv) {
 	GLUI_Master.set_glutReshapeFunc(myReshape);
 	GLUI_Master.set_glutDisplayFunc(myDisplay);
 	GLUI_Master.set_glutKeyboardFunc(myKeyboard);
+	GLUI_Master.set_glutSpecialFunc(mySpecial);
 	GLUI_Master.set_glutMouseFunc(myMouse);
 	glutMotionFunc(myMotion);
 	
