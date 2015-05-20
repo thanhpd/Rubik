@@ -7,6 +7,7 @@
 #include "Vector3D.h"
 #include "Camera.h"
 #include "Rubik.h"
+#include "Help.h"
 
 using namespace std;
 
@@ -46,6 +47,8 @@ int camX, camY;
 
 bool isShuffling;
 int shuffleNum, shuffleCounter;
+
+Help helper;
 
 /** Live variables passed into GLUI **/
 int size = 2;
@@ -120,9 +123,9 @@ void myDisplay() {;
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     myRubik.draw();
 	
-//	glTranslatef( 0.0, 0.0, -2.6f );
-	glTranslatef(objectPos[0], objectPos[1], -objectPos[2]); 
-//	glMultMatrixf(view_rotate);
+	/** Draw help screen **/
+//	helper.set(screenWidth, screenHeight);
+//	helper.draw();
 	
 	if (isShuffling && gluiMain) gluiMain->disable();
 	else gluiMain->enable();
@@ -567,6 +570,10 @@ void controlCallback(int control) {
 		case SPEED_ID:
 			rotateAngle = (rotateAngle > 0) ? speed : -speed;
 			break;
+		case HELP_ID:
+			helper.set(screenWidth, screenHeight);
+			helper.draw();
+			
 	}
 	glutPostRedisplay();
 }
