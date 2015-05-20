@@ -509,8 +509,10 @@ void mySpecial(int key, int x, int y) {
 void gameTimer(int v) {
 	string base = "Time remaining (in seconds): ";
     char* buf = new char;
-    string s = base + itoa(timer * 60- currentTime, buf, 10);
+    string remainTime = itoa(timer * 60- currentTime, buf, 10);
+    string s = base + remainTime;
     timeRemain->set_text(s.c_str());
+    if (isSolved) return;
     if (!isShuffling) currentTime += 1;
     if (currentTime > timer * 60) {
     	timeOutGame = true;
