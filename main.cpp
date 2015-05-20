@@ -42,6 +42,7 @@ int rotateSliceName, rotateSliceValue;
 bool isCheckingRubik, isRotating;
 double rotateAngle, rotatedAngle;
 
+bool initCube;
 bool isCheckingCamera;
 int camX, camY;
 
@@ -113,7 +114,7 @@ void myInit(){
  	myCam.set(m, m, m, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
  	myCam.setShape(45.0f, 1.0, 0.1f, 100.0f);
  	
- 	isCheckingRubik = isRotating = isCheckingCamera = isShuffling = false;
+ 	isCheckingRubik = isRotating = isCheckingCamera = isShuffling = initCube = false;
 }
 
 void myDisplay() {;
@@ -122,6 +123,12 @@ void myDisplay() {;
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     myRubik.draw();
+    
+    if(!initCube) {
+    	myCam.right(0);
+		initCube = true;	
+    }
+    
 	
 	/** Draw help screen **/
 //	helper.set(screenWidth, screenHeight);
@@ -477,6 +484,23 @@ void mySpecial(int key, int x, int y){
 	glutPostRedisplay();
 }
 
+
+void gameTimer(int v) {
+	string base = "Time remaining (in seconds): ";
+    char* buf = new char;
+    string s = base + itoa(timer * 10- currentTime, buf, 10);
+    timeRemain->set_text(s.c_str());
+    if (!isShuffling) currentTime += 1;
+    if (currentTime > timer * 10) {
+    	timeOutGame = true;
+       	timeRemain->set_text("Time out! Press restart to start again!");
+       	delete buf;
+      	return;
+    }
+    glutPostRedisplay();
+  	glutTimerFunc(v, gameTimer, v);
+}
+
 void myReshape(int x, int y) {
 	int tx, ty, tw, th;
     GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
@@ -498,22 +522,6 @@ void myReshape(int x, int y) {
     // Get Back to the Modelview
     glMatrixMode(GL_MODELVIEW);
     glutPostRedisplay();
-}
-
-void gameTimer(int v) {
-	string base = "Time remaining (in seconds): ";
-    char* buf = new char;
-    string s = base + itoa(timer * 10- currentTime, buf, 10);
-    timeRemain->set_text(s.c_str());
-    if (!isShuffling) currentTime += 1;
-    if (currentTime > timer * 10) {
-    	timeOutGame = true;
-       	timeRemain->set_text("Time out! Press restart to start again!");
-       	delete buf;
-      	return;
-    }
-    glutPostRedisplay();
-  	glutTimerFunc(v, gameTimer, v);
 }
 
 void controlCallback(int control) {
@@ -557,8 +565,6 @@ void controlCallback(int control) {
 			gluiSubShow = true;
 			
 			myInit();
-			GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
-			myReshape(tx, ty);
 			
 			currentTime = 0;
 			break;
