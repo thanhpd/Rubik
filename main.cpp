@@ -98,12 +98,6 @@ int currentTime = 0;
 #define SPEED_ID 500
 #define INVOKE_ID 501
 
-//void setRubikRotationNumber(int num) {
-//	myRubik.setRotationNumber(num);
-//	rotationNum = num;
-//	speed = 90.0 / num;
-//}
-
 void myInit(){
 	myRubik.setSize(n);
     myRubik.init();
@@ -363,6 +357,7 @@ void rotateRubik(int ignored){
 		isRotating = false;
 		int dir = (rotateAngle < 0) ? CLOCKWISE : COUNTER_CLOCKWISE;
 		myRubik.invertSlice(rotateSliceName, rotateSliceValue, dir);
+		cout << myRubik.isCorrect() << endl;
 	}
 }
 
@@ -462,7 +457,7 @@ void shuffleRubik(int ignored){
 
 void shuffleRubik() {
 	isShuffling = isRotating = true;
-	shuffleNum = 12 * n; shuffleCounter = 0;
+	shuffleNum = 1; shuffleCounter = 0;
 	speed *= 2; // double speed when shuffling
 	
 	srand(time(NULL));
@@ -483,7 +478,6 @@ void mySpecial(int key, int x, int y){
 	
 	glutPostRedisplay();
 }
-
 
 void gameTimer(int v) {
 	string base = "Time remaining (in seconds): ";

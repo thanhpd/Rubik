@@ -112,9 +112,11 @@ void Rubik::init() {
 	/* inititalize n*n*n cubes of the Rubik */
 	for (int x = 0; x < n; x++)
 		for (int y = 0; y < n; y++)
-			for (int z = 0; z < n; z++)
-				cube[x][y][z].set(faceX[x][y][z], faceX[x + 1][y][z], faceY[x][y][z], faceY[x][y + 1][z],
+			for (int z = 0; z < n; z++){
+				cube[x][y][z].setFace(faceX[x][y][z], faceX[x + 1][y][z], faceY[x][y][z], faceY[x][y + 1][z],
 										faceZ[x][y][z], faceZ[x][y][z + 1]);
+				cube[x][y][z].setIndex(x, y, z);
+			}
 	
 	/* initialize the number of rotation */
 	rotationNumber = 90;
@@ -207,4 +209,13 @@ void Rubik::setRotationNumber(int rotationNumber){
 
 int Rubik::getRotationNumber(){
 	return rotationNumber;
+}
+
+bool Rubik::isCorrect(){
+	for (int x = 0; x < n; x++)
+		for (int y = 0; y < n; y++)
+			for (int z = 0; z < n; z++)
+				if (x != cube[x][y][z].getX() || y != cube[x][y][z].getY() || z != cube[x][y][z].getZ())
+					return false;
+	return true;
 }

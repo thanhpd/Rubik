@@ -34,6 +34,7 @@ public:
 	int getSize();
     void setRotationNumber(int);
     int getRotationNumber();
+    bool isCorrect();
 };
 
 #endif //RUBIK_RUBIK_H

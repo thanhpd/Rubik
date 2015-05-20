@@ -3,10 +3,10 @@
 Cube::Cube() { }
 
 Cube::Cube(Face f0, Face f1, Face f2, Face f3, Face f4, Face f5) {
-    set(f0, f1, f2, f3, f4, f5);
+    setFace(f0, f1, f2, f3, f4, f5);
 }
 
-void Cube::set(Face f0, Face f1, Face f2, Face f3, Face f4, Face f5) {
+void Cube::setFace(Face f0, Face f1, Face f2, Face f3, Face f4, Face f5) {
     face[0].set(f0);
     Point3D p0 = f0.getCenter();
     face[1].set(f1);
@@ -27,8 +27,9 @@ void Cube::set(Face f0, Face f1, Face f2, Face f3, Face f4, Face f5) {
     center.set(cenx, ceny, cenz);
 }
 
-void Cube::set(const Cube &cube) {
-    set(cube.face[0], cube.face[1], cube.face[2], cube.face[3], cube.face[4], cube.face[5]);
+void Cube::set(Cube &cube) {
+    setFace(cube.face[0], cube.face[1], cube.face[2], cube.face[3], cube.face[4], cube.face[5]);
+    setIndex(cube.getX(), cube.getY(), cube.getZ());
 }
 
 void Cube::draw() {
@@ -47,5 +48,33 @@ void Cube::rotate(Vector3D u, float angle) {
 
 Point3D Cube::getCenter() {
     return center;
+}
+
+void Cube::setIndex(int x, int y, int z){
+	setX(x); setY(y); setZ(z);
+}
+
+void Cube::setX(int x){
+	this->x = x;
+}
+
+int Cube::getX(){
+	return x;
+}
+
+void Cube::setY(int y){
+	this->y = y;
+}
+
+int Cube::getY(){
+	return y;
+}
+
+void Cube::setZ(int z){
+	this->z = z;
+}
+
+int Cube::getZ(){
+	return z;
 }
 
