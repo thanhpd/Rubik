@@ -289,7 +289,7 @@ bool findIntersectionWithRubikFace(Point3D &intersection, int &slideName, int &c
 }
 
 void myMouse(int button, int state, int x, int y){
-	if (gluiSubShow || isShuffling || timeOutGame) return;
+	if (gluiSubShow || timeOutGame) return;
 	
 	if (state == GLUT_DOWN){ // mouse click
 		findNearAndFarPoint(x, y);
@@ -297,7 +297,7 @@ void myMouse(int button, int state, int x, int y){
 		int sName, cx, cy, cz;
 		double pValue;
 		if (findIntersectionWithRubikFace(p, sName, cx, cy, cz, pValue)){ // click in rubik
-			if (!isRotating){
+			if (!isRotating && ! isShuffling){
 				isCheckingRubik = true;
 				clickPoint.set(p);
 				sliceName = sName;
@@ -457,7 +457,7 @@ void shuffleRubik(int ignored){
 
 void shuffleRubik() {
 	isShuffling = isRotating = true;
-	shuffleNum = 1; shuffleCounter = 0;
+	shuffleNum = 12 * n; shuffleCounter = 0;
 	speed *= 2; // double speed when shuffling
 	
 	srand(time(NULL));
