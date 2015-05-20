@@ -14,12 +14,16 @@ void Help::set(int width, int height) {
 	this->height = height;
 }
 
+GLuint Help::getTextureId() {
+	return textureId;
+}
+
 void Help::draw() {
 	glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, textureId);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
+	
     glBegin(GL_QUADS);
     glTexCoord2f(0.0f, 0.0f);
     glVertex2f(0.0, 0.0);

@@ -30,6 +30,7 @@ class Help {
 		Help(int width, int height);
 		void set(int width, int height);
 		void draw();
+		GLuint getTextureId();
 };
 
 #endif //RUBIK_FACE_H

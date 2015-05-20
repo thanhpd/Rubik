@@ -53,6 +53,7 @@ bool isSolved;
 int moveCounter;
 
 Help helper;
+int requireHelp = false;
 
 /** Live variables passed into GLUI **/
 int size = 2;
@@ -134,8 +135,44 @@ void myDisplay() {;
     
 	
 	/** Draw help screen **/
-//	helper.set(screenWidth, screenHeight);
-//	helper.draw();
+	if(requireHelp) {
+//		glMatrixMode(GL_MODELVIEW);
+//		glLoadIdentity();
+//		glMatrixMode(GL_PROJECTION);
+//		glLoadIdentity();
+//		gluOrtho2D(0, 300, 0, 510);
+//		glDisable(GL_DEPTH_TEST);
+//		glDisable(GL_CULL_FACE);
+//		glDisable(GL_TEXTURE_2D);
+//		glDisable(GL_LIGHTING);
+//		glPushMatrix();
+//		helper.set(screenWidth, screenHeight);
+//		helper.draw();	   
+//		glPopMatrix();
+//		glEnable(GL_DEPTH_TEST);
+//		glMatrixMode(GL_MODELVIEW);
+		
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glOrtho(0, 1000, 0, 800, 0, 1);
+
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+	
+	// No depth buffer writes for background.
+	glDepthMask( false );
+	helper.set(screenWidth, screenHeight);
+	helper.draw();
+
+	glDepthMask( true );
+
+	glPopMatrix();
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+	}
+	
 	
 	if (isShuffling && gluiMain) gluiMain->disable();
 	else gluiMain->enable();
@@ -606,9 +643,8 @@ void controlCallback(int control) {
 		case SPEED_ID:
 			rotateAngle = (rotateAngle > 0) ? speed : -speed;
 			break;
-//		case HELP_ID:
-//			helper.set(screenWidth, screenHeight);
-//			helper.draw();
+		case HELP_ID:
+			requireHelp = true;
 			
 	}
 	glutPostRedisplay();
@@ -692,8 +728,6 @@ void mainScene() {
 	GLUI_Scrollbar *speedBar = new GLUI_Scrollbar(setPanel, "Spin speed:", GLUI_SCROLL_HORIZONTAL, &speed, SPEED_ID, controlCallback);
 	speedBar->set_float_limits(0.1, 6);
 	new GLUI_StaticText(setPanel, "");
-	
-	new GLUI_Checkbox(setPanel, "Enable Sound", &enableSound);
 	
 	/** A 'help' button **/
 	new GLUI_Button(glui, "Help", HELP_ID, controlCallback);
