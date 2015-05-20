@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <cmath>
 #include <iostream>
+#include <sstream>
 #include <ctime>
 #include "Point3D.h"
 #include "Vector3D.h"
@@ -47,6 +48,9 @@ int camX, camY;
 
 bool isShuffling;
 int shuffleNum, shuffleCounter;
+
+bool isSolved;
+int moveCounter;
 
 Help helper;
 
@@ -102,7 +106,7 @@ int currentTime = 0;
 
 void controlCallback(int);
 
-void myInit(){
+void myInit() {
 	myRubik.setSize(n);
     myRubik.init();
     minPoint.set(myRubik.getMinPoint());
@@ -112,7 +116,8 @@ void myInit(){
  	myCam.set(m, m, m, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
  	myCam.setShape(45.0f, 1.0, 0.1f, 100.0f);
  	
- 	isCheckingRubik = isRotating = isCheckingCamera = isShuffling = initCube = false;
+ 	isCheckingRubik = isRotating = isCheckingCamera = isShuffling = initCube = isSolved = false;
+ 	moveCounter = 0;
 }
 
 void myDisplay() {;
@@ -158,7 +163,7 @@ void myKeyboard(unsigned char key, int x, int y) {
 	glutPostRedisplay();
 }
 
-void findNearAndFarPoint(int x, int y){
+void findNearAndFarPoint(int x, int y) {
 	double matModelView[16], matProjection[16], winX, winY;
 	int viewport[4];
 	
@@ -175,15 +180,15 @@ void findNearAndFarPoint(int x, int y){
 	farPoint.set(tx, ty, tz);
 }
 
-bool isInRange(double x, double a, double b){
+bool isInRange(double x, double a, double b) {
 	return (x > a && x < b);
 }
 
-double manhattanDistance(Point3D a, Point3D b){
+double manhattanDistance(Point3D a, Point3D b) {
 	return abs(a.getX() - b.getX()) + abs(a.getY() - b.getY()) + abs(a.getZ() - b.getZ());
 }
 
-void findNearestCube(const Point3D &p, int x1, int x2, int y_1, int y2, int z1, int z2, int &resX, int &resY, int &resZ){
+void findNearestCube(const Point3D &p, int x1, int x2, int y_1, int y2, int z1, int z2, int &resX, int &resY, int &resZ) {
 	resX = x1; resY = y_1; resZ = z1;
 	double dist, minDist;
 	minDist = manhattanDistance(p, myRubik.getCube(x1, y_1, z1).getCenter());
@@ -205,7 +210,7 @@ void findNearestCube(const Point3D &p, int x1, int x2, int y_1, int y2, int z1, 
 	cubeX&Y&Z		: indexs of the cube cutting the ray
 	planeValue		: value of the plane cutting the ray (planeName = slideName)
 */
-bool findIntersectionWithRubikFace(Point3D &intersection, int &slideName, int &cubeX, int &cubeY, int &cubeZ, double &planeValue){
+bool findIntersectionWithRubikFace(Point3D &intersection, int &slideName, int &cubeX, int &cubeY, int &cubeZ, double &planeValue) {
 	double dx, dy, dz, t, tx, ty, tz, t1, t2, x, y, z;
 	
 	// init the line cross near point and far point
@@ -292,7 +297,7 @@ bool findIntersectionWithRubikFace(Point3D &intersection, int &slideName, int &c
 		return false;
 }
 
-void myMouse(int button, int state, int x, int y){
+void myMouse(int button, int state, int x, int y) {
 	if (gluiSubShow || timeOutGame) return;
 	
 	if (state == GLUT_DOWN){ // mouse click
@@ -301,7 +306,7 @@ void myMouse(int button, int state, int x, int y){
 		int sName, cx, cy, cz;
 		double pValue;
 		if (findIntersectionWithRubikFace(p, sName, cx, cy, cz, pValue)){ // click in rubik
-			if (!isRotating && ! isShuffling){
+			if (!isRotating && ! isShuffling && !isSolved){
 				isCheckingRubik = true;
 				clickPoint.set(p);
 				sliceName = sName;
@@ -318,7 +323,7 @@ void myMouse(int button, int state, int x, int y){
 	}
 }
 
-Point3D findIntersectionWithPlane(int name, double value){
+Point3D findIntersectionWithPlane(int name, double value) {
 	double dx, dy, dz, t, px, py, pz;
 
 	// init the line cross near point and far point
@@ -346,7 +351,7 @@ Point3D findIntersectionWithPlane(int name, double value){
 	return Point3D(px, py, pz);
 }
 
-void rotateRubik(int ignored){
+void rotateRubik(int ignored) {
 	if (rotatedAngle + abs(rotateAngle) < 90.0){
 		myRubik.rotate(rotateSliceName, rotateSliceValue, rotateAngle);
 		rotatedAngle += abs(rotateAngle);
@@ -361,11 +366,15 @@ void rotateRubik(int ignored){
 		isRotating = false;
 		int dir = (rotateAngle < 0) ? CLOCKWISE : COUNTER_CLOCKWISE;
 		myRubik.invertSlice(rotateSliceName, rotateSliceValue, dir);
+		moveCounter ++;
 		
 		if (myRubik.isCorrect()) {
 			gluiWin = GLUI_Master.create_glui("Congratulation!");
-			
-			GLUI_StaticText *text = new GLUI_StaticText(gluiWin, "You are a genius!");
+						
+			stringstream ss;
+			ss << moveCounter;
+			string s = "You are a genius!\nTotal move: " + ss.str();
+			GLUI_StaticText *text = new GLUI_StaticText(gluiWin, s.c_str());
 			text->set_w(300);
 			text->set_alignment(GLUI_ALIGN_CENTER);
 			
@@ -373,11 +382,13 @@ void rotateRubik(int ignored){
 			gluiWin->add_button("OK", OK_GAME_ID, controlCallback);
 			
 			isWinWindowShow = true;
+			isSolved = true;
+			moveCounter = 0;
 		}
 	}
 }
 
-void rotateRubik(Point3D a, Point3D b){
+void rotateRubik(Point3D a, Point3D b) {
 	double absX = abs(b.getX() - a.getX());
 	double absY = abs(b.getY() - a.getY());
 	double absZ = abs(b.getZ() - a.getZ());
@@ -424,7 +435,7 @@ void rotateRubik(Point3D a, Point3D b){
 	glutTimerFunc(1, rotateRubik, 0);
 }
 
-void myMotion(int x, int y){
+void myMotion(int x, int y) {
 	findNearAndFarPoint(x, y);
 	
 	if (isCheckingRubik){
@@ -443,7 +454,7 @@ void myMotion(int x, int y){
 	}
 }
 
-void shuffleRubik(int ignored){
+void shuffleRubik(int ignored) {
 	if (rotatedAngle + abs(rotateAngle) < 90){
 		myRubik.rotate(rotateSliceName, rotateSliceValue, rotateAngle);
 		rotatedAngle += abs(rotateAngle);
@@ -484,7 +495,7 @@ void shuffleRubik() {
 	glutTimerFunc(0, shuffleRubik, 0);
 }
 
-void mySpecial(int key, int x, int y){
+void mySpecial(int key, int x, int y) {
 	switch(key){
 		case GLUT_KEY_UP: myCam.slide(0, 0, -0.2); break;
 		case GLUT_KEY_DOWN: myCam.slide(0, 0, 0.2); break;
@@ -601,7 +612,7 @@ void controlCallback(int control) {
 	glutPostRedisplay();
 }
 
-void myGlutIdle( void ){
+void myGlutIdle( void ) {
   /* According to the GLUT specification, the current window is 
      undefined during an idle callback.  So we need to explicitly change
      it if necessary */
