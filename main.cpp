@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <cmath>
 #include <iostream>
-#include <sstream>
 #include <ctime>
 #include "Point3D.h"
 #include "Vector3D.h"
@@ -20,7 +19,7 @@ using namespace std;
 #include <GL/glui.h>
 #endif
 
-const int screenWidth = 800;
+const int screenWidth = 1000;
 const int screenHeight = 600;
 const int screenPosX = 100;
 const int screenPosY = 100;
@@ -67,7 +66,7 @@ float objectPos[] = { 0.0, 0.0, 0.0 };
 GLUI *glui, *_startScene;
 GLUI_Spinner *speedSpinner;
 GLUI_Panel *newGamePanel, *setPanel;
-GLUI *gluiMain, *gluiSub;
+GLUI *gluiMain, *gluiSub, *gluiWin;
 bool gluiMainShow, gluiSubShow;
 //GLUI_Spinner *speedSpinner;
 //GLUI_Panel *newGamePanel, *setPanel;
@@ -78,6 +77,7 @@ GLUI_StaticText *timeRemain;
 bool fullscreen = false;
 bool timeModeGame = false;
 bool timeOutGame = false;
+bool isWinWindowShow = false;
 
 //int FPS = 60;
 int currentTime = 0;
@@ -97,6 +97,8 @@ int currentTime = 0;
 #define SHOW_ID 403
 #define SPEED_ID 500
 #define INVOKE_ID 501
+
+void controlCallback(int);
 
 void myInit(){
 	myRubik.setSize(n);
@@ -358,6 +360,19 @@ void rotateRubik(int ignored){
 		int dir = (rotateAngle < 0) ? CLOCKWISE : COUNTER_CLOCKWISE;
 		myRubik.invertSlice(rotateSliceName, rotateSliceValue, dir);
 		cout << myRubik.isCorrect() << endl;
+		
+		if (myRubik.isCorrect()) {
+			gluiWin = GLUI_Master.create_glui("Congratulation!");
+			
+			GLUI_StaticText *text = new GLUI_StaticText(gluiWin, "You are a genius!");
+			text->set_w(300);
+			text->set_alignment(GLUI_ALIGN_CENTER);
+			
+			gluiWin->add_statictext("");
+			gluiWin->add_button("RESTART GAME", RESTART_GAME_ID, controlCallback);
+			
+			isWinWindowShow = true;
+		}
 	}
 }
 
@@ -457,7 +472,7 @@ void shuffleRubik(int ignored){
 
 void shuffleRubik() {
 	isShuffling = isRotating = true;
-	shuffleNum = 12 * n; shuffleCounter = 0;
+	shuffleNum = 1+ 0*12 * n; shuffleCounter = 0;
 	speed *= 2; // double speed when shuffling
 	
 	srand(time(NULL));
@@ -482,10 +497,10 @@ void mySpecial(int key, int x, int y){
 void gameTimer(int v) {
 	string base = "Time remaining (in seconds): ";
     char* buf = new char;
-    string s = base + itoa(timer * 10- currentTime, buf, 10);
+    string s = base + itoa(timer * 60- currentTime, buf, 10);
     timeRemain->set_text(s.c_str());
     if (!isShuffling) currentTime += 1;
-    if (currentTime > timer * 10) {
+    if (currentTime > timer * 60) {
     	timeOutGame = true;
        	timeRemain->set_text("Time out! Press restart to start again!");
        	delete buf;
@@ -532,15 +547,16 @@ void controlCallback(int control) {
 				gameTimer(1000);
 			}
 			break;
-		case START_NEW_GAME_ID:		
+		case START_NEW_GAME_ID:
+					cout << "start-game";
+			n = cubeSize;
+			myInit();
 			gluiMain->show();
 			gluiMainShow = true;
 			
 			gluiSub->hide();
 			gluiSubShow = false;
 			
-			n = cubeSize;
-			myInit();
 			GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
 			myReshape(tx, ty);
 			shuffleRubik();
@@ -549,18 +565,24 @@ void controlCallback(int control) {
 				timeRemain->enable();
 				gameTimer(1000);
 			} 
-	
+			
 			break;
 		case RESTART_GAME_ID:
+			cout << "ABC";
+			if (isWinWindowShow) gluiWin->hide();
+			
 			gluiMain->hide();
 			gluiMainShow = false;
 			
 			gluiSub->show();
-			gluiSubShow = true;
+			gluiSubShow = true;	
 			
 			myInit();
-			
+			GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
+			myReshape(tx, ty);
+						
 			currentTime = 0;
+			
 			break;
 		case GAME_MODE_ID:
 			modeGroup->get_int_val() == 0 ? timeModeGame = true : timeModeGame = false;
@@ -570,9 +592,9 @@ void controlCallback(int control) {
 		case SPEED_ID:
 			rotateAngle = (rotateAngle > 0) ? speed : -speed;
 			break;
-		case HELP_ID:
-			helper.set(screenWidth, screenHeight);
-			helper.draw();
+//		case HELP_ID:
+//			helper.set(screenWidth, screenHeight);
+//			helper.draw();
 			
 	}
 	glutPostRedisplay();
