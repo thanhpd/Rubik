@@ -503,10 +503,10 @@ void myReshape(int x, int y) {
 void gameTimer(int v) {
 	string base = "Time remaining (in seconds): ";
     char* buf = new char;
-    string s = base + itoa(timer * 10- currentTime, buf, 10);
+    string s = base + itoa(timer * 60- currentTime, buf, 10);
     timeRemain->set_text(s.c_str());
     if (!isShuffling) currentTime += 1;
-    if (currentTime > timer * 10) {
+    if (currentTime > timer * 60) {
     	timeOutGame = true;
        	timeRemain->set_text("Time out! Press restart to start again!");
        	delete buf;
