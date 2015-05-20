@@ -73,6 +73,7 @@ bool gluiMainShow, gluiSubShow;
 GLUI_RadioGroup *modeGroup;
 GLUI_Spinner *spinnerTimer;
 GLUI_StaticText *timeRemain;
+GLUI_Button *btnRestart;
 
 bool fullscreen = false;
 bool timeModeGame = false;
@@ -89,7 +90,8 @@ int currentTime = 0;
 #define CUBE_SIZE_ID 300
 #define START_NEW_GAME_ID 199
 #define RESET_GAME_ID 198
-#define RESTART_GAME_ID 197
+#define OK_GAME_ID 197
+#define RESTART_GAME_ID 196
 #define HELP_ID 100
 #define DISABLE_ID 400
 #define ENABLE_ID 401
@@ -359,7 +361,6 @@ void rotateRubik(int ignored){
 		isRotating = false;
 		int dir = (rotateAngle < 0) ? CLOCKWISE : COUNTER_CLOCKWISE;
 		myRubik.invertSlice(rotateSliceName, rotateSliceValue, dir);
-		cout << myRubik.isCorrect() << endl;
 		
 		if (myRubik.isCorrect()) {
 			gluiWin = GLUI_Master.create_glui("Congratulation!");
@@ -369,7 +370,7 @@ void rotateRubik(int ignored){
 			text->set_alignment(GLUI_ALIGN_CENTER);
 			
 			gluiWin->add_statictext("");
-			gluiWin->add_button("RESTART GAME", RESTART_GAME_ID, controlCallback);
+			gluiWin->add_button("OK", OK_GAME_ID, controlCallback);
 			
 			isWinWindowShow = true;
 		}
@@ -472,7 +473,7 @@ void shuffleRubik(int ignored){
 
 void shuffleRubik() {
 	isShuffling = isRotating = true;
-	shuffleNum = 1+ 0*12 * n; shuffleCounter = 0;
+	shuffleNum = 12 * n; shuffleCounter = 0;
 	speed *= 2; // double speed when shuffling
 	
 	srand(time(NULL));
@@ -548,7 +549,6 @@ void controlCallback(int control) {
 			}
 			break;
 		case START_NEW_GAME_ID:
-					cout << "start-game";
 			n = cubeSize;
 			myInit();
 			gluiMain->show();
@@ -567,9 +567,10 @@ void controlCallback(int control) {
 			} 
 			
 			break;
-		case RESTART_GAME_ID:
-			cout << "ABC";
+		case OK_GAME_ID:
 			if (isWinWindowShow) gluiWin->hide();
+			break;
+		case RESTART_GAME_ID:
 			
 			gluiMain->hide();
 			gluiMainShow = false;
@@ -668,7 +669,7 @@ void mainScene() {
 	/** Reset game button **/
 	new GLUI_Button(glui, "Shuffle Rubik", RESET_GAME_ID, controlCallback);
 	glui->add_statictext("");
-	new GLUI_Button(glui, "RESTART GAME", RESTART_GAME_ID, controlCallback);
+	btnRestart = new GLUI_Button(glui, "RESTART GAME", RESTART_GAME_ID, controlCallback);
 	
 	/** Setting section **/
 	setPanel = new GLUI_Panel(glui, "Setting", false);
