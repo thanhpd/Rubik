@@ -373,10 +373,10 @@ void rotateRubik(int ignored) {
 						
 			stringstream ss;
 			ss << moveCounter;
-			string s = "You are a genius!\nTotal move: " + ss.str();
+			string s = "Total move: " + ss.str();
+			GLUI_StaticText *text0 = new GLUI_StaticText(gluiWin, "You are a genius!");
 			GLUI_StaticText *text = new GLUI_StaticText(gluiWin, s.c_str());
 			text->set_w(300);
-			text->set_alignment(GLUI_ALIGN_CENTER);
 			
 			gluiWin->add_statictext("");
 			gluiWin->add_button("OK", OK_GAME_ID, controlCallback);
