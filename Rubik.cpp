@@ -47,13 +47,6 @@ GLuint Rubik::loadTexture(string imageName){
 	return id;
 }
 
-//GLuint Rubik::loadTexture(char* imageName){
-//	Image *image = loadBMP(imageName);
-//	GLuint id = loadTexture(image);
-//	delete image;
-//	return id;
-//}
-
 void Rubik::init() {
 	initCubeMatrix();
 	
@@ -211,11 +204,32 @@ int Rubik::getRotationNumber(){
 	return rotationNumber;
 }
 
+bool Rubik::checkSlice(int x0, int x1, int y0, int y1, int z0, int z1){
+	bool checkX, checkY, checkZ;
+	checkX = checkY = checkZ = true;
+	int tx = cube[x0][y0][z0].getX();
+	int ty = cube[x0][y0][z0].getY();
+	int tz = cube[x0][y0][z0].getZ();
+	for (int x = x0; x <= x1; x++)
+		for (int y = y0; y <= y1; y++)
+			for (int z = z0; z <= z1; z++){
+				checkX &= (cube[x][y][z].getX() == tx);
+				checkY &= (cube[x][y][z].getY() == ty);
+				checkZ &= (cube[x][y][z].getZ() == tz);
+				if (!(checkX || checkY || checkZ))
+					return false;				
+			}
+	return true;
+}
+
 bool Rubik::isCorrect(){
-	for (int x = 0; x < n; x++)
-		for (int y = 0; y < n; y++)
-			for (int z = 0; z < n; z++)
-				if (x != cube[x][y][z].getX() || y != cube[x][y][z].getY() || z != cube[x][y][z].getZ())
-					return false;
+	if (	! checkSlice(0, 0, 0, n - 1, 0, n - 1)			// check slice x = 0
+		 ||	! checkSlice(n - 1, n - 1, 0, n - 1, 0, n - 1)	// check slice x = n-1
+		 ||	! checkSlice(0, n - 1, 0, 0, 0, n - 1)			// check slice y = 0
+		 ||	! checkSlice(0, n - 1, n - 1, n - 1, 0, n - 1)	// check slice y = n-1
+		 ||	! checkSlice(0, n - 1, 0, n - 1, 0, 0)			// check slice z = 0
+		 ||	! checkSlice(0, n - 1, 0, n - 1, n - 1, n - 1)	// check slice z = n-1
+	) return false;
+	
 	return true;
 }

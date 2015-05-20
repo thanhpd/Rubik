@@ -16,8 +16,8 @@ private:
 
 	void initCubeMatrix();
     GLuint loadTexture(string);
-//    GLuint loadTexture(char*);
     GLuint loadTexture(Image*);
+    bool checkSlice(int, int, int, int, int, int);
     
 public:
 	Rubik();
