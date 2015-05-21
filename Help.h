@@ -23,8 +23,10 @@ class Help {
 		GLuint textureId;
 		int width;
 		int height;
+		
 		GLuint loadTexture(string imageName);
 		GLuint loadTexture(Image*);
+		
 	public:
 		Help();
 		Help(int width, int height);
@@ -33,5 +35,5 @@ class Help {
 		GLuint getTextureId();
 };
 
-#endif //RUBIK_FACE_H
+#endif
 

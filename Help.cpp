@@ -1,6 +1,6 @@
 #include "Help.h"
 
-Help::Help() {}
+Help::Help() { }
 
 Help::Help(int width, int height) {
 	this->textureId = loadTexture("help.bmp");

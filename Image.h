@@ -9,14 +9,13 @@
  **/
 
 class Image {
-public:
-    Image(char *ps, int w, int h);
-
-    ~Image();
-
-    char *pixels;
-    int width;
-    int height;
+	public:
+	    char *pixels;
+	    int width;
+	    int height;
+	    
+	    Image(char*, int, int);
+	    ~Image();
 };
 
 /*
@@ -24,7 +23,7 @@ public:
  * to a pointer of Image
  *
  */
-Image *loadBMP(const char *filename);
+Image *loadBMP(const char*);
 
 
-#endif //RUBIK_IMAGE_H
+#endif

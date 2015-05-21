@@ -10,7 +10,7 @@ Rubik::Rubik(int n) {
 	init();
 }
 
-Rubik::~Rubik(){
+Rubik::~Rubik() {
 	for (int i = 0; i < n; i++){
 		for (int j = 0; j < n; j++){
 			delete cube[i][j];
@@ -20,7 +20,7 @@ Rubik::~Rubik(){
 	delete cube;
 }
 
-void Rubik::initCubeMatrix(){
+void Rubik::initCubeMatrix() {
 	cube = new Cube**[n];
 	for (int i = 0; i < n; i++){
 		cube[i] = new Cube*[n];
@@ -31,16 +31,16 @@ void Rubik::initCubeMatrix(){
 }
 
 GLuint Rubik::loadTexture(Image *image) {
-    GLuint textureId;
-    glGenTextures(1, &textureId);
-    glBindTexture(GL_TEXTURE_2D, textureId);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image->width, image->height, 0,
-                 GL_RGB, GL_UNSIGNED_BYTE, image->pixels);
+	GLuint textureId;
+	glGenTextures(1, &textureId);
+	glBindTexture(GL_TEXTURE_2D, textureId);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image->width, image->height, 0,
+					GL_RGB, GL_UNSIGNED_BYTE, image->pixels);
 
     return textureId;
 }
 
-GLuint Rubik::loadTexture(string imageName){
+GLuint Rubik::loadTexture(string imageName) {
 	Image *image = loadBMP(imageName.c_str());
 	GLuint id = loadTexture(image);
 	delete image;
@@ -122,11 +122,11 @@ void Rubik::draw() {
 				cube[i][j][k].draw();
 }
 
-Cube Rubik::getCube(int i, int j, int k){
+Cube Rubik::getCube(int i, int j, int k) {
 	return cube[i][j][k];
 }
 
-void Rubik::rotate(int name, int value, float angle){
+void Rubik::rotate(int name, int value, float angle) {
 	Vector3D u;
 	int i1, i2, j1, j2, k1, k2;
 	
@@ -157,7 +157,7 @@ void Rubik::rotate(int name, int value, float angle){
 				cube[i][j][k].rotate(u, angle);
 }
 
-void Rubik::invertSlice(int name, int value, int dir){
+void Rubik::invertSlice(int name, int value, int dir) {
 	Cube tem[n][n];
 	for (int i = 0; i < n; i++)
 		for (int j = 0; j < n; j++)
@@ -180,31 +180,31 @@ void Rubik::invertSlice(int name, int value, int dir){
 	}
 }
 
-Point3D Rubik::getMinPoint(){
+Point3D Rubik::getMinPoint() {
 	return min;
 }
 
-Point3D Rubik::getMaxPoint(){
+Point3D Rubik::getMaxPoint() {
 	return max;
 }
 
-void Rubik::setSize(int n){
+void Rubik::setSize(int n) {
 	this->n = n;
 }
 
-int Rubik::getSize(){
+int Rubik::getSize() {
 	return n;
 }
 
-void Rubik::setRotationNumber(int rotationNumber){
+void Rubik::setRotationNumber(int rotationNumber) {
 	this->rotationNumber = rotationNumber;
 }
 
-int Rubik::getRotationNumber(){
+int Rubik::getRotationNumber() {
 	return rotationNumber;
 }
 
-bool Rubik::checkSlice(int x0, int x1, int y0, int y1, int z0, int z1){
+bool Rubik::checkSlice(int x0, int x1, int y0, int y1, int z0, int z1) {
 	bool checkX, checkY, checkZ;
 	checkX = checkY = checkZ = true;
 	int tx = cube[x0][y0][z0].getX();
@@ -222,7 +222,7 @@ bool Rubik::checkSlice(int x0, int x1, int y0, int y1, int z0, int z1){
 	return true;
 }
 
-bool Rubik::isCorrect(){
+bool Rubik::isCorrect() {
 	if (	! checkSlice(0, 0, 0, n - 1, 0, n - 1)			// check slice x = 0
 		 ||	! checkSlice(n - 1, n - 1, 0, n - 1, 0, n - 1)	// check slice x = n-1
 		 ||	! checkSlice(0, n - 1, 0, 0, 0, n - 1)			// check slice y = 0

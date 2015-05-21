@@ -19,26 +19,21 @@
 #define NUM_POINTS 4
 
 class Face {
-private:
-    Point3D vertex[NUM_POINTS];
-    GLuint textureId;
-    Point3D center;
+	private:
+	    Point3D vertex[NUM_POINTS];
+	    GLuint textureId;
+	    Point3D center;
 
-public:
-    Face();
-
-    Face(Point3D v0, Point3D v1, Point3D v2, Point3D v3, GLuint textureId);
-
-    void set(Point3D v0, Point3D v1, Point3D v2, Point3D v3, GLuint textureId);
-
-    void set(const Face &f);
-
-    void draw();
-
-    void rotate(Vector3D u, float angle);
-
-    Point3D getCenter();
+	public:
+	    Face();
+	    Face(Point3D v0, Point3D v1, Point3D v2, Point3D v3, GLuint textureId);
+	
+	    void set(Point3D v0, Point3D v1, Point3D v2, Point3D v3, GLuint textureId);
+	    void set(const Face &f);
+	
+	    void draw();
+	    void rotate(Vector3D u, float angle);
+	    Point3D getCenter();
 };
 
-
-#endif //RUBIK_FACE_H
+#endif

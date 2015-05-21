@@ -121,7 +121,7 @@ void myInit() {
  	moveCounter = 0;
 }
 
-void myDisplay() {;
+void myDisplay() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glEnable(GL_DEPTH_TEST);
@@ -136,41 +136,25 @@ void myDisplay() {;
 	
 	/** Draw help screen **/
 	if(requireHelp) {
-//		glMatrixMode(GL_MODELVIEW);
-//		glLoadIdentity();
-//		glMatrixMode(GL_PROJECTION);
-//		glLoadIdentity();
-//		gluOrtho2D(0, 300, 0, 510);
-//		glDisable(GL_DEPTH_TEST);
-//		glDisable(GL_CULL_FACE);
-//		glDisable(GL_TEXTURE_2D);
-//		glDisable(GL_LIGHTING);
-//		glPushMatrix();
-//		helper.set(screenWidth, screenHeight);
-//		helper.draw();	   
-//		glPopMatrix();
-//		glEnable(GL_DEPTH_TEST);
-//		glMatrixMode(GL_MODELVIEW);
-		
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glOrtho(0, 1000, 0, 800, 0, 1);
-
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glLoadIdentity();
+		glMatrixMode(GL_PROJECTION);
+		glPushMatrix();
+		glOrtho(0, 1000, 0, 800, 0, 1);
 	
-	// No depth buffer writes for background.
-	glDepthMask( false );
-	helper.set(screenWidth, screenHeight);
-	helper.draw();
-
-	glDepthMask( true );
-
-	glPopMatrix();
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		glLoadIdentity();
+		
+		// No depth buffer writes for background.
+		glDepthMask( false );
+		helper.set(screenWidth, screenHeight);
+		helper.draw();
+	
+		glDepthMask( true );
+	
+		glPopMatrix();
+		glMatrixMode(GL_PROJECTION);
+		glPopMatrix();
+		glMatrixMode(GL_MODELVIEW);
 	}
 	
 	
@@ -389,12 +373,12 @@ Point3D findIntersectionWithPlane(int name, double value) {
 }
 
 void rotateRubik(int ignored) {
-	if (rotatedAngle + abs(rotateAngle) < 90.0){
+	if (rotatedAngle + abs(rotateAngle) < 90.0) {
 		myRubik.rotate(rotateSliceName, rotateSliceValue, rotateAngle);
 		rotatedAngle += abs(rotateAngle);
 		glutPostRedisplay();
 		glutTimerFunc(1, rotateRubik, 0);
-	}else{
+	} else {
 		double rest = 90.0 - rotatedAngle;
 		if (rotateAngle < 0) rest = -rest;
 		myRubik.rotate(rotateSliceName, rotateSliceValue, rest);
@@ -431,37 +415,37 @@ void rotateRubik(Point3D a, Point3D b) {
 	double absZ = abs(b.getZ() - a.getZ());
 	
 	// -speed ~ CLOCKWISE ; speed ~ COUNTER_CLOCKWISE
-	if (sliceName == SLICE_X){
-		if (absZ > absY){
+	if (sliceName == SLICE_X) {
+		if (absZ > absY) {
 			rotateSliceName = SLICE_Y;
 			rotateSliceValue = cubeY;
 			if (cubeX == 0) rotateAngle = (b.getZ() > a.getZ()) ? speed : -speed;
 			else rotateAngle = (b.getZ() > a.getZ()) ? -speed : speed;
-		}else{
+		} else {
 			rotateSliceName = SLICE_Z;
 			rotateSliceValue = cubeZ;
 			if (cubeX == 0) rotateAngle = (b.getY() > a.getY()) ? -speed : speed;
 			else rotateAngle = (b.getY() > a.getY()) ? speed : -speed;
 		}
-	}else if (sliceName == SLICE_Y){
-		if (absZ > absX){
+	} else if (sliceName == SLICE_Y) {
+		if (absZ > absX) {
 			rotateSliceName = SLICE_X;
 			rotateSliceValue = cubeX;
 			if (cubeY == 0) rotateAngle = (b.getZ() > a.getZ()) ? -speed : speed;
 			else rotateAngle = (b.getZ() > a.getZ()) ? speed : -speed;
-		}else{
+		} else {
 			rotateSliceName = SLICE_Z;
 			rotateSliceValue = cubeZ;
 			if (cubeY == 0) rotateAngle = (b.getX() > a.getX()) ? speed : -speed;
 			else rotateAngle = (b.getX() > a.getX()) ? -speed : speed;
 		}
-	}else{
-		if (absX > absY){
+	} else {
+		if (absX > absY) {
 			rotateSliceName = SLICE_Y;
 			rotateSliceValue = cubeY;
 			if (cubeZ == 0) rotateAngle = (b.getX() > a.getX()) ? -speed : speed;
 			else rotateAngle = (b.getX() > a.getX()) ? speed : -speed;
-		}else{
+		} else {
 			rotateSliceName = SLICE_X;
 			rotateSliceValue = cubeX;
 			if (cubeZ == 0) rotateAngle = (b.getY() > a.getY()) ? speed : -speed;
@@ -475,14 +459,14 @@ void rotateRubik(Point3D a, Point3D b) {
 void myMotion(int x, int y) {
 	findNearAndFarPoint(x, y);
 	
-	if (isCheckingRubik){
+	if (isCheckingRubik) {
 		Point3D p = findIntersectionWithPlane(sliceName, planeValue);
-		if (manhattanDistance(p, clickPoint) > 0.7){ // start rotate
+		if (manhattanDistance(p, clickPoint) > 0.7) { // start rotate
 			isCheckingRubik = false;
 			isRotating = true;
 			rotateRubik(clickPoint, p);
 		}
-	}else if (isCheckingCamera){
+	} else if (isCheckingCamera) {
 		int dx = x - camX, dy = y - camY;
 		myCam.up(dy * 0.5);
 		myCam.right(dx * 0.5);
@@ -492,12 +476,12 @@ void myMotion(int x, int y) {
 }
 
 void shuffleRubik(int ignored) {
-	if (rotatedAngle + abs(rotateAngle) < 90){
+	if (rotatedAngle + abs(rotateAngle) < 90) {
 		myRubik.rotate(rotateSliceName, rotateSliceValue, rotateAngle);
 		rotatedAngle += abs(rotateAngle);
 		glutPostRedisplay();
 		glutTimerFunc(1, shuffleRubik, 0);
-	}else{
+	} else {
 		double rest = 90.0 - rotatedAngle;
 		if (rotateAngle < 0) rest = -rest;
 		myRubik.rotate(rotateSliceName, rotateSliceValue, rest);
@@ -507,10 +491,10 @@ void shuffleRubik(int ignored) {
 		
 		rotatedAngle = 0;
 		shuffleCounter++;
-		if (shuffleCounter == shuffleNum){
+		if (shuffleCounter == shuffleNum) {
 			isShuffling = isRotating = false;
 			speed /= 2;
-		}else{	
+		} else {
 			rotateSliceName = rand() % 3;
 			rotateSliceValue = rand() % n;
 			rotateAngle = (rand() % 2 == 0) ? speed : -speed;
